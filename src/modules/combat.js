@@ -3,14 +3,17 @@
  */
 
 import { createItem } from './items.js';
+import { SKILL_DATABASE } from './skills.js';
+
+// ─── Gegner-Definitionen ──────────────────────────────────────────────────────
 
 export const ENEMY_TEMPLATES = {
   FLEDERMAUS: {
     name: 'Riesenfledermaus',
     level: 1,
-    hp: 35,
-    maxHp: 35,
-    damage: 6,
+    hp: 55, maxHp: 55,
+    damage: 7,
+    armor: 2,
     skills: [],
     xpReward: 35,
     goldRange: [4, 10],
@@ -20,11 +23,11 @@ export const ENEMY_TEMPLATES = {
     name: 'Riesenspinne',
     image: 'assets/images/enemy_spider.png',
     level: 1,
-    hp: 48,
-    maxHp: 48,
-    damage: 9,
+    hp: 80, maxHp: 80,
+    damage: 10,
+    armor: 3,
     skills: [
-      { name: 'Giftbiss', chance: 0.35, dot: 4, duration: 3, text: 'beißt giftig zu' }
+      { name: 'Giftbiss', chance: 0.30, dot: 5, duration: 3, text: 'beißt giftig zu' }
     ],
     xpReward: 45,
     goldRange: [6, 15],
@@ -36,147 +39,209 @@ export const ENEMY_TEMPLATES = {
     name: 'Goblin',
     image: 'assets/images/enemy_goblin.png',
     level: 2,
-    hp: 65,
-    maxHp: 65,
-    damage: 12,
+    hp: 110, maxHp: 110,
+    damage: 13,
+    armor: 5,
     skills: [
-      { name: 'Fieser Trick', chance: 0.3, extraDamage: 5, text: 'wirft Sand in die Augen' }
+      { name: 'Fieser Trick', chance: 0.25, extraDamage: 6, text: 'wirft Sand in die Augen', hitChanceMod: -0.15, hitChanceDuration: 2 }
     ],
     xpReward: 70,
     goldRange: [15, 25],
     lootTable: [
-      { id: 'heavy_gloves', chance: 0.15 },
-      { id: 'cloth_hood', chance: 0.15 }
+      { id: 'heavy_gloves', chance: 0.12 },
+      { id: 'cloth_hood', chance: 0.12 }
     ]
   },
   SKELETT: {
     name: 'Skelett-Beschwörer',
     image: 'assets/images/enemy_skeleton.png',
     level: 3,
-    hp: 60,
-    maxHp: 60,
-    damage: 16,
+    hp: 95, maxHp: 95,
+    damage: 17,
+    armor: 4,
     skills: [
-      { name: 'Feuerblitz', chance: 0.4, extraDamage: 8, text: 'beschwört einen kleinen Feuerstoß' }
+      { name: 'Feuerblitz', chance: 0.35, extraDamage: 10, text: 'beschwört einen Feuerstoß', isSpell: true }
     ],
     xpReward: 90,
     goldRange: [20, 35],
     lootTable: [
-      { id: 'magical_orb', chance: 0.15 },
-      { id: 'cloth_trousers', chance: 0.15 }
+      { id: 'magical_orb', chance: 0.12 },
+      { id: 'cloth_trousers', chance: 0.12 }
     ]
   },
+
+  // ─── Bosse ─────────────────────────────────────────────────────────────────
   BOSS_SPIDER: {
-    name: 'Spinnenkönigin (Boss)',
+    name: 'Spinnenkönigin',
     image: 'assets/images/enemy_spider.png',
     level: 3,
-    hp: 250,
-    maxHp: 250,
+    hp: 320, maxHp: 320,
     damage: 18,
+    armor: 10,
     isBoss: true,
     skills: [
-      { name: 'Kokonwurf', chance: 0.25, stun: true, text: 'spinnt ein Ziel in ein klebriges Netz ein' },
-      { name: 'Tödliches Toxin', chance: 0.35, dot: 8, duration: 3, text: 'injiziert ein schweres Gift DoT' }
+      { name: 'Kokonwurf', chance: 0.20, stun: true, text: 'spinnt ein Ziel in ein klebriges Netz ein' },
+      { name: 'Tödliches Toxin', chance: 0.30, dot: 9, duration: 3, text: 'injiziert ein schweres Gift' }
     ],
-    xpReward: 350,
-    goldRange: [100, 150],
+    phases: [
+      {
+        threshold: 0.60,
+        triggered: false,
+        message: '🕷️ Die Spinnenkönigin ist verletzt! Sie ruft ihre Brut zu Hilfe!',
+        extraSkills: [
+          { name: 'Giftspucker', chance: 0.40, dot: 7, duration: 2, text: 'spuckt Gift auf alle Helden', isAoe: true }
+        ],
+        damageMultiplier: 1.20
+      },
+      {
+        threshold: 0.30,
+        triggered: false,
+        message: '💀 DIE SPINNENKÖNIGIN RAST! Ihre Augen leuchten blutrot!',
+        extraSkills: [
+          { name: 'Tödliche Umarmung', chance: 0.50, extraDamage: 18, dot: 12, duration: 3, text: 'reißt mit all ihren Beinen zu' }
+        ],
+        damageMultiplier: 1.30
+      }
+    ],
+    xpReward: 400,
+    goldRange: [100, 160],
     lootTable: [
-      { id: 'steel_shield', chance: 0.5 },
-      { id: 'plate_gloves', chance: 0.5 }
+      { id: 'steel_shield', chance: 0.55 },
+      { id: 'plate_gloves', chance: 0.55 }
     ]
   },
+
   BOSS_GOBLIN: {
-    name: 'Goblin-König (Boss)',
-    image: 'assets/images/enemy_ork.png', // Ork image serves as Boss Goblin
+    name: 'Goblin-König Grak',
+    image: 'assets/images/enemy_ork.png',
     level: 4,
-    hp: 380,
-    maxHp: 380,
+    hp: 480, maxHp: 480,
     damage: 22,
+    armor: 18,
     isBoss: true,
     skills: [
-      { name: 'Königlicher Hieb', chance: 0.3, extraDamage: 12, stun: true, text: 'schlägt wild mit dem Zepter zu' },
-      { name: 'Tollkühner Schrei', chance: 0.2, selfBuff: true, effectText: 'Wütend (Schaden +30%)' }
+      { name: 'Königlicher Hieb', chance: 0.25, extraDamage: 14, stun: true, text: 'schlägt wild mit dem Zepter zu' },
+      { name: 'Tollkühner Schrei', chance: 0.18, selfBuff: true, effectText: 'Wütend (+30% Schaden)' }
     ],
-    xpReward: 500,
-    goldRange: [180, 250],
+    phases: [
+      {
+        threshold: 0.65,
+        triggered: false,
+        message: '⚔️ Grak brüllt wütend! Er ruft seine Leibwächter — VERSTÄRKUNG EINGETROFFEN!',
+        extraSkills: [
+          { name: 'Befehle brüllen', chance: 0.35, extraDamage: 8, text: 'koordiniert seine Truppen für einen kombinierten Angriff' }
+        ],
+        damageMultiplier: 1.25
+      },
+      {
+        threshold: 0.35,
+        triggered: false,
+        message: '💥 GRAKS LETZTE WUTATTACKE! Er wirft sein Zepter und greift mit bloßen Fäusten an!',
+        extraSkills: [
+          { name: 'Barbarischer Rausch', chance: 0.55, extraDamage: 20, text: 'schlägt wahllos auf alles ein', isAoe: true }
+        ],
+        damageMultiplier: 1.40
+      }
+    ],
+    xpReward: 550,
+    goldRange: [180, 260],
     lootTable: [
-      { id: 'sword_2h', chance: 0.4 },
-      { id: 'plate_chest', chance: 0.4 },
-      { id: 'holy_relic', chance: 0.4 }
+      { id: 'sword_2h', chance: 0.45 },
+      { id: 'plate_chest', chance: 0.45 },
+      { id: 'holy_relic', chance: 0.45 }
     ]
   }
 };
 
+// ─── Hilfsfunktionen ──────────────────────────────────────────────────────────
+
+/**
+ * Erstellt eine skalierte Gegner-Instanz.
+ * HP skaliert mit +35% pro Leveldifferenz, Schaden mit +25%.
+ */
+function createEnemy(key, targetLevel = null) {
+  const tpl = ENEMY_TEMPLATES[key];
+  const levelDiff = targetLevel && targetLevel > tpl.level ? targetLevel - tpl.level : 0;
+
+  const scaledHp   = Math.round(tpl.hp     * (1 + levelDiff * 0.35));
+  const scaledDmg  = Math.round(tpl.damage * (1 + levelDiff * 0.25));
+
+  // Boss-Phasen tief kopieren damit jeder Kampf frische triggered-Flags hat
+  const phases = tpl.phases
+    ? tpl.phases.map(p => ({ ...p, triggered: false,
+        extraSkills: p.extraSkills ? p.extraSkills.map(s => ({ ...s })) : [] }))
+    : null;
+
+  return {
+    ...tpl,
+    hp: scaledHp, maxHp: scaledHp, currentHp: scaledHp,
+    damage: scaledDmg,
+    phases,
+    id: `enemy_${key}_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    buffs: [], debuffs: [],
+    stunned: false,
+    damageModifier: 1.0,
+    damageDebuff: 0,
+    damageTakenMultiplier: 1.0,
+    hitChanceModifier: 0.0
+  };
+}
+
+// ─── Combat-Klasse ────────────────────────────────────────────────────────────
+
 export class Combat {
-  constructor(player, enemyKeys) {
+  /**
+   * @param {Character} player
+   * @param {string[]}  enemyKeys  — Keys aus ENEMY_TEMPLATES
+   * @param {number}    [encounterLevel] — Optional: skaliert Gegner auf dieses Level
+   */
+  constructor(player, enemyKeys, encounterLevel = null) {
     this.player = player;
-    
-    // Party initialisieren
+
+    // Party: Spieler + Companions
     this.heroes = [player, ...(player.party || [])];
     this.heroes.forEach(h => {
-      h.buffs = [];
+      h.buffs  = [];
       h.debuffs = [];
       h.shield = 0;
       h.stunned = false;
       h.skipNextTurn = false;
+      h.bonusCritChance = 0;
+      h.bonusBlockChance = 0;
+      h.damageTakenMultiplier = 1.0;
       if (h.classKey === 'KRIEGER') h.currentResource = 0;
     });
 
-    // Feinde initialisieren
-    this.enemies = enemyKeys.map((key, idx) => {
-      const template = ENEMY_TEMPLATES[key];
-      return {
-        ...template,
-        id: `enemy_${idx}`,
-        currentHp: template.hp,
-        buffs: [],
-        debuffs: [],
-        stunned: false,
-        damageModifier: 1.0,
-        damageDebuff: 0,
-        damageTakenMultiplier: 1.0,
-        hitChanceModifier: 0.0
-      };
-    });
+    this.enemies = enemyKeys.map(key => createEnemy(key, encounterLevel));
 
-    this.turn = 0; // 0 = Player, 1 = Companions, 2 = Enemies
-    
+    this.turn = 0;
     const enemyNames = this.enemies.map(e => e.name).join(', ');
     this.logs = [`Kampf gegen ${enemyNames} beginnt!`];
-    this.isOver = false;
+    this.isOver  = false;
     this.victory = false;
-    this.fled = false;
-    
-    // Hilfsfunktion: Gibt alle lebenden Ziele zurück
-    this.getAliveHeroes = () => this.heroes.filter(h => h.currentHp > 0);
+    this.fled    = false;
+
+    this.getAliveHeroes  = () => this.heroes.filter(h => h.currentHp > 0);
     this.getAliveEnemies = () => this.enemies.filter(e => e.currentHp > 0);
 
     this.turnQueue = [];
     this.currentTurnIndex = 0;
   }
 
+  // ─── Kampfablauf ────────────────────────────────────────────────────────────
+
   startCombat() {
-    // Initiative würfeln (W20 + Beweglichkeit oder Level-basiert)
-    const rollInitiative = (entity, isHero) => {
-      const agi = isHero ? (entity.getAgility ? entity.getAgility() : 5) : (entity.level * 2);
-      const d20 = Math.floor(Math.random() * 20) + 1;
-      return d20 + agi;
+    const roll = (entity, isHero) => {
+      const agi = isHero ? (entity.stats?.agility ?? 5) : entity.level * 2;
+      return Math.floor(Math.random() * 20) + 1 + agi;
     };
 
-    this.heroes.forEach(h => {
-      this.turnQueue.push({ entity: h, type: 'hero', initiative: rollInitiative(h, true) });
-    });
-    this.enemies.forEach(e => {
-      this.turnQueue.push({ entity: e, type: 'enemy', initiative: rollInitiative(e, false) });
-    });
-
-    // Absteigend sortieren
+    this.heroes.forEach(h  => this.turnQueue.push({ entity: h, type: 'hero',  initiative: roll(h,  true)  }));
+    this.enemies.forEach(e => this.turnQueue.push({ entity: e, type: 'enemy', initiative: roll(e, false) }));
     this.turnQueue.sort((a, b) => b.initiative - a.initiative);
-    
-    let orderLog = this.turnQueue.map(t => `${t.entity.name} (${t.initiative})`).join(', ');
-    this.addLog(`🎲 Initiative gewürfelt! Zugreihenfolge: ${orderLog}`);
 
-    // Den ersten Zug starten
+    const order = this.turnQueue.map(t => `${t.entity.name} (${t.initiative})`).join(', ');
+    this.addLog(`🎲 Initiative: ${order}`);
     this.nextTurn();
   }
 
@@ -187,109 +252,85 @@ export class Combat {
     if (this.isOver) return;
 
     if (this.currentTurnIndex >= this.turnQueue.length) {
-      this.currentTurnIndex = 0; // Neue Runde
-      this.addLog('--- Neue Kampfrunde ---');
+      this.currentTurnIndex = 0;
+      this.addLog('─── Neue Runde ───');
     }
 
-    const turnData = this.turnQueue[this.currentTurnIndex];
-    const currentActor = turnData.entity;
-    const type = turnData.type;
+    const { entity, type } = this.turnQueue[this.currentTurnIndex];
 
-    if (currentActor.currentHp <= 0) {
+    if (entity.currentHp <= 0) {
       this.currentTurnIndex++;
       this.nextTurn();
       return;
     }
 
-    if (type === 'hero' && currentActor === this.player) {
-      // Spieler ist dran! Wir unterbrechen den Loop und warten auf UI Input.
-      this.player.bonusStats = { strength: 0, agility: 0, intellect: 0, stamina: 0, armor: 0, damage: 0, spellPower: 0, healPower: 0 };
-      this.player.bonusCritChance = 0;
-      this.player.damageDebuff = 0;
-      this.tickEffects(this.player, true);
-
-      if (this.player.currentHp <= 0) {
-        this.checkDefeat();
-        this.currentTurnIndex++;
-        if (!this.isOver) this.nextTurn();
-        return;
+    if (type === 'hero' && entity === this.player) {
+      this.tickEffects(entity, true);
+      if (entity.currentHp <= 0) { this.checkDefeat(); this.currentTurnIndex++; if (!this.isOver) this.nextTurn(); return; }
+      if (entity.stunned) {
+        this.addLog(`${entity.name} ist betäubt und setzt aus!`);
+        entity.stunned = false; this.currentTurnIndex++; this.nextTurn(); return;
       }
-
-      if (this.player.stunned) {
-        this.addLog(`${this.player.name} ist betäubt und kann nicht handeln!`);
-        this.player.stunned = false;
-        this.currentTurnIndex++;
-        this.nextTurn();
-        return;
+      if (entity.skipNextTurn) {
+        this.addLog(`${entity.name} sammelt Kräfte.`);
+        entity.skipNextTurn = false; this.currentTurnIndex++; this.nextTurn(); return;
       }
+      return; // Warte auf executePlayerTurn()
 
-      if (this.player.skipNextTurn) {
-        this.addLog(`${this.player.name} sammelt Kräfte für diese Runde.`);
-        this.player.skipNextTurn = false;
-        this.currentTurnIndex++;
-        this.nextTurn();
-        return;
-      }
-
-      // Warte auf executePlayerTurn Aufruf
-      return;
-    }
-    else if (type === 'hero') {
-      this.tickEffects(currentActor, true);
-      if (currentActor.currentHp > 0 && !currentActor.stunned) {
-        this.executeCompanionAI(currentActor);
-      } else if (currentActor.stunned) {
-        this.addLog(`${currentActor.name} ist betäubt!`);
-        currentActor.stunned = false;
+    } else if (type === 'hero') {
+      this.tickEffects(entity, true);
+      if (entity.currentHp > 0 && !entity.stunned) {
+        this.executeCompanionAI(entity);
+      } else if (entity.stunned) {
+        this.addLog(`${entity.name} ist betäubt!`);
+        entity.stunned = false;
       }
       this.currentTurnIndex++;
       this.nextTurn();
-    }
-    else if (type === 'enemy') {
-      this.tickEffects(currentActor, false);
-      if (currentActor.currentHp > 0 && !currentActor.stunned) {
-        this.executeEnemyAI(currentActor);
-      } else if (currentActor.stunned) {
-        this.addLog(`${currentActor.name} ist betäubt!`);
-        currentActor.stunned = false;
+
+    } else {
+      this.tickEffects(entity, false);
+      if (entity.currentHp > 0 && !entity.stunned) {
+        this.executeEnemyAI(entity);
+      } else if (entity.stunned) {
+        this.addLog(`${entity.name} ist betäubt!`);
+        entity.stunned = false;
       }
       this.currentTurnIndex++;
       this.nextTurn();
     }
   }
 
-  addLog(text) {
-    this.logs.push(text);
-  }
+  addLog(text) { this.logs.push(text); }
 
-  tickEffects(target, isPlayerSide) {
-    if (target.buffs && target.buffs.length > 0) {
+  // ─── Effekte ticken ─────────────────────────────────────────────────────────
+
+  tickEffects(target, isHeroSide) {
+    if (target.buffs?.length) {
       target.buffs.forEach(buff => {
         if (buff.effect) buff.effect(target);
         if (buff.hot) {
-          const actualHeal = Math.min(target.maxHp - target.currentHp, buff.hot);
-          target.currentHp += actualHeal;
-          if (actualHeal > 0) this.addLog(`[Buff] ${target.name} regeneriert ${actualHeal} Leben durch '${buff.name}'.`);
+          const heal = Math.min(target.maxHp - target.currentHp, buff.hot);
+          if (heal > 0) { target.currentHp += heal; this.addLog(`[Buff] ${target.name} regeneriert ${heal} LP durch '${buff.name}'.`); }
         }
         buff.duration--;
       });
       target.buffs = target.buffs.filter(b => b.duration > 0);
     }
 
-    if (target.debuffs && target.debuffs.length > 0) {
+    if (target.debuffs?.length) {
       target.debuffs.forEach(debuff => {
         if (debuff.effect) debuff.effect(target);
         if (debuff.dot) {
-          let finalDot = debuff.dot;
-          if (isPlayerSide && target.shield && target.shield > 0) {
-            const absorbed = Math.min(target.shield, finalDot);
-            target.shield -= absorbed;
-            finalDot -= absorbed;
-            this.addLog(`[Debuff] ${target.name} fängt ${absorbed} Schaden von '${debuff.name}' mit Schild ab.`);
+          let dot = debuff.dot;
+          if (isHeroSide && target.shield > 0) {
+            const abs = Math.min(target.shield, dot);
+            target.shield -= abs; dot -= abs;
+            if (abs > 0) this.addLog(`[Schild] ${target.name} fängt ${abs} DoT-Schaden ab.`);
           }
-          if (finalDot > 0) {
-            target.currentHp = Math.max(0, target.currentHp - finalDot);
-            this.addLog(`[Debuff] ${target.name} erleidet ${finalDot} Schaden durch '${debuff.name}'.`);
+          if (dot > 0) {
+            target.currentHp = Math.max(0, target.currentHp - dot);
+            this.addLog(`[DoT] ${target.name} erleidet ${dot} Schaden durch '${debuff.name}'.`);
           }
         }
         debuff.duration--;
@@ -297,243 +338,430 @@ export class Combat {
       target.debuffs = target.debuffs.filter(d => d.duration > 0);
     }
 
-    if (isPlayerSide && target.resetStats) {
-      target.resetStats();
-    }
+    // Buff-abhängige bonusCritChance und bonusBlockChance werden durch buff.effect gesetzt;
+    // zwischen Runden reset (next tick setzt sie neu)
+    if (isHeroSide && target.resetStats) target.resetStats();
   }
 
-  // SPIELER-ZUG
-  executePlayerTurn(skill, targetId = null) {
-    if (this.isOver) return;
-    
-    const currentActorData = this.turnQueue[this.currentTurnIndex];
-    if (!currentActorData || currentActorData.entity !== this.player) {
-      return { error: 'Du bist nicht am Zug!' };
-    }
+  // ─── Treffer-/Crit-/Dodge-/Block-System ─────────────────────────────────────
 
-    // Zielauswahl (Feind oder Verbündeter)
-    let targetEntity = null;
-    if (targetId) {
-      targetEntity = this.enemies.find(e => e.id === targetId) || this.heroes.find(h => h.name === targetId);
-    } else {
-      if (skill.isHeal || skill.id === 'PRIESTER_RENEW' || skill.id === 'PRIESTER_SHIELD') {
-        targetEntity = this.player; // Standardziel für Buffs/Heals: Selbst
-      } else {
-        targetEntity = this.getAliveEnemies()[0]; // Standardziel für Angriffe: Erster Feind
+  /**
+   * Wrapper für alle Angriffe.
+   * Für Schadens-Skills gegen Feinde: Treffercheck → Skill-Ausführung → Crit-Prüfung.
+   * Für Heils-/Buff-Skills: direkte Ausführung.
+   */
+  executeAttack(caster, target, skill) {
+    const isDmgVsEnemy = skill.type === 'damage' && !target.classKey;
+
+    if (isDmgVsEnemy) {
+      // 1. Treffercheck (Base 87%, modifiziert durch Debuffs des Casters)
+      const hitChance = 0.87 + (caster.hitChanceModifier || 0);
+      if (Math.random() > hitChance) {
+        return { text: `${caster.name} greift ${target.name} an — verfehlt!`, damage: 0, miss: true };
       }
     }
 
-    if (!targetEntity && skill.id !== 'HEAL_ALL' && !skill.isHeal && skill.type !== 'buff') {
-      this.checkVictory();
-      return { error: 'Kein Ziel vorhanden.' };
+    const result = skill.execute(caster, target);
+    if (result.error) return result;
+
+    if (isDmgVsEnemy && result.damage > 0) {
+      // 2. Crit-Check
+      const isSpell = skill.costType === 'MANA' &&
+        caster.classKey !== 'KRIEGER' && caster.classKey !== 'PALADIN';
+      const critChance = isSpell
+        ? (caster.getSpellCritChance ? caster.getSpellCritChance() : 0.05)
+        : (caster.getCritChance      ? caster.getCritChance()      : 0.05);
+
+      if (Math.random() < critChance) {
+        const extra = Math.round(result.damage * 0.75);
+        target.currentHp = Math.max(0, target.currentHp - extra);
+        return {
+          ...result,
+          text: result.text + ` 💥 KRIT! (+${extra})`,
+          damage: result.damage + extra,
+          isCrit: true
+        };
+      }
     }
 
-    const result = skill.execute(this.player, targetEntity);
+    return result;
+  }
+
+  // ─── Spielerzug ─────────────────────────────────────────────────────────────
+
+  executePlayerTurn(skill, targetId = null) {
+    if (this.isOver) return { error: 'Kampf ist beendet.' };
+
+    const { entity } = this.turnQueue[this.currentTurnIndex] || {};
+    if (entity !== this.player) return { error: 'Du bist nicht am Zug!' };
+
+    // Zielbestimmung
+    let target = null;
+    if (targetId) {
+      target = this.enemies.find(e => e.id === targetId) ||
+               this.heroes.find(h => h.name === targetId);
+    } else {
+      if (skill.isHeal || skill.type === 'heal' || skill.type === 'buff') {
+        target = this.player;
+      } else {
+        target = this.getAliveEnemies()[0];
+      }
+    }
+
+    if (!target) { this.checkVictory(); return { error: 'Kein gültiges Ziel.' }; }
+
+    const result = this.executeAttack(this.player, target, skill);
     if (result.error) return result;
 
     this.addLog(result.text);
-    
+    this.checkBossPhaseTransition();
     this.checkVictory();
-    if (!this.isOver) {
-      this.currentTurnIndex++;
-      this.nextTurn(); // Übergibt den Zug an den nächsten in der Queue
-    }
-    return { success: true };
+
+    if (!this.isOver) { this.currentTurnIndex++; this.nextTurn(); }
+    return { success: true, result };
   }
 
-  // COMPANION KI
+  // ─── Companion-KI ────────────────────────────────────────────────────────────
+
+  /** Gibt klassenspezifische Basis-Skills zurück (unabhängig vom Talentsystem). */
+  getCompanionSkills(comp) {
+    const { classKey, specKey, role } = comp;
+
+    if (classKey === 'PRIESTER') {
+      if (role === 'HEALER' || specKey === 'HEILUNG') {
+        return [SKILL_DATABASE.PRIESTER_FLASH_HEAL, SKILL_DATABASE.PRIESTER_RENEW,
+                SKILL_DATABASE.PRIESTER_SHIELD, SKILL_DATABASE.PRIESTER_SMITE, SKILL_DATABASE.PRIESTER_AUTO];
+      }
+      return [SKILL_DATABASE.PRIESTER_MIND_BLAST, SKILL_DATABASE.PRIESTER_SW_PAIN,
+              SKILL_DATABASE.PRIESTER_AUTO];
+    }
+    if (classKey === 'PALADIN') {
+      if (role === 'TANK' || specKey === 'TANK') {
+        return [SKILL_DATABASE.PALADIN_AVENGERS_SHIELD, SKILL_DATABASE.PALADIN_HOLY_SHIELD,
+                SKILL_DATABASE.PALADIN_FLASH_OF_LIGHT, SKILL_DATABASE.PALADIN_AUTO];
+      }
+      return [SKILL_DATABASE.PALADIN_CRUSADER_STRIKE, SKILL_DATABASE.PALADIN_JUDGEMENT,
+              SKILL_DATABASE.PALADIN_WORD_OF_GLORY, SKILL_DATABASE.PALADIN_AUTO];
+    }
+    if (classKey === 'KRIEGER') {
+      if (role === 'TANK' || specKey === 'TANK') {
+        return [SKILL_DATABASE.KRIEGER_SHIELD_SLAM, SKILL_DATABASE.KRIEGER_DEMO_SHOUT,
+                SKILL_DATABASE.KRIEGER_LAST_STAND, SKILL_DATABASE.KRIEGER_AUTO];
+      }
+      return [SKILL_DATABASE.KRIEGER_BLOODTHIRST, SKILL_DATABASE.KRIEGER_WHIRLWIND,
+              SKILL_DATABASE.KRIEGER_AUTO];
+    }
+    if (classKey === 'MAGIER') {
+      return [SKILL_DATABASE.MAGIER_FIREBALL, SKILL_DATABASE.MAGIER_FROSTBOLT,
+              SKILL_DATABASE.MAGIER_ICE_BARRIER, SKILL_DATABASE.MAGIER_AUTO];
+    }
+    return [];
+  }
+
+  /**
+   * Heilt einen Verbündeten direkt (Companions heilen andere Helden, nicht sich selbst).
+   * Basiert auf SpellPower des Companions.
+   */
+  applyCompanionHeal(comp, target, isHoT = false) {
+    const sp = comp.getSpellPower ? comp.getSpellPower() : 10;
+    if (isHoT) {
+      const cost = 15;
+      if (comp.currentResource < cost) return null;
+      comp.currentResource -= cost;
+      const hotVal = Math.round(5 + sp * 0.35);
+      target.buffs = target.buffs || [];
+      target.buffs.push({ name: 'Erneuerung', duration: 3, hot: hotVal });
+      return `${comp.name} wirkt Erneuerung auf ${target.name} (+${hotVal} LP/Runde).`;
+    } else {
+      const cost = 20;
+      if (comp.currentResource < cost) return null;
+      comp.currentResource -= cost;
+      const heal = Math.round(20 + sp * 1.3);
+      target.currentHp = Math.min(target.maxHp, target.currentHp + heal);
+      return `${comp.name} heilt ${target.name} um ${heal} LP.`;
+    }
+  }
+
   executeCompanionAI(comp) {
     if (this.isOver) return;
+    const aliveHeroes  = this.getAliveHeroes();
+    const aliveEnemies = this.getAliveEnemies();
+    const skills       = this.getCompanionSkills(comp);
 
-    // KI-Entscheidung
+    const heroHpPct = h => h.currentHp / h.maxHp;
+
+    // Priorität 1: Notfall-Heilung — irgendein Held < 25% HP
+    const critHero = aliveHeroes.find(h => heroHpPct(h) < 0.25);
+    if (critHero) {
+      const log = this.applyCompanionHeal(comp, critHero);
+      if (log) { this.addLog(`[Comp] ${log}`); return; }
+    }
+
+    // Priorität 2: Vorsorge-Heilung für Heiler — niedrigster Held < 55% HP
     if (comp.role === 'HEALER') {
-      let lowestHero = null;
-      let lowestPct = 1.0;
-      this.getAliveHeroes().forEach(h => {
-        const pct = h.currentHp / h.maxHp;
-        if (pct < lowestPct) {
-          lowestPct = pct;
-          lowestHero = h;
-        }
-      });
-
-      if (lowestHero && lowestPct < 0.6) {
-        const healAmount = Math.round(comp.getSpellPower() * 1.5);
-        lowestHero.currentHp = Math.min(lowestHero.maxHp, lowestHero.currentHp + healAmount);
-        this.addLog(`[Companion] ${comp.name} wirkt Heilung auf ${lowestHero.name} (+${healAmount} HP).`);
-      } else {
-        const target = this.getAliveEnemies()[0];
-        if (target) {
-          const dmg = Math.round(comp.getSpellPower() * 0.8);
-          target.currentHp = Math.max(0, target.currentHp - dmg);
-          this.addLog(`[Companion] ${comp.name} wirkt Heiliges Feuer auf ${target.name} (${dmg} Schaden).`);
-        }
-      }
-    } else if (comp.role === 'TANK') {
-      const target = this.getAliveEnemies().sort((a,b) => b.currentHp - a.currentHp)[0];
-      if (target) {
-        const dmg = comp.getPhysicalDamage();
-        target.currentHp = Math.max(0, target.currentHp - dmg);
-        this.addLog(`[Companion] ${comp.name} schlägt mit dem Schwert auf ${target.name} ein (${dmg} Schaden).`);
-      }
-    } else {
-      const target = this.getAliveEnemies()[0];
-      if (target) {
-        const dmg = Math.round(comp.getPhysicalDamage() * 1.2);
-        target.currentHp = Math.max(0, target.currentHp - dmg);
-        this.addLog(`[Companion] ${comp.name} greift ${target.name} an (${dmg} Schaden).`);
+      const lowest = aliveHeroes.reduce((a, b) => heroHpPct(a) < heroHpPct(b) ? a : b);
+      if (heroHpPct(lowest) < 0.55) {
+        // Versuche HoT wenn kein direkter Schaden, sonst direkte Heilung
+        const hotUsed = !lowest.buffs?.some(b => b.name === 'Erneuerung')
+          ? this.applyCompanionHeal(comp, lowest, true)
+          : null;
+        const log = hotUsed || this.applyCompanionHeal(comp, lowest);
+        if (log) { this.addLog(`[Comp] ${log}`); return; }
       }
     }
+
+    // Priorität 3: Selbstschutz (Schild/Buff) wenn comp < 40% HP
+    if (heroHpPct(comp) < 0.40) {
+      const shieldSkill = skills.find(s => s.type === 'buff' && comp.currentResource >= s.cost);
+      if (shieldSkill) {
+        const res = shieldSkill.execute(comp, comp);
+        if (!res.error) { this.addLog(`[Comp] ${res.text}`); return; }
+      }
+    }
+
+    // Priorität 4: Debuff auf stärksten Feind
+    if (aliveEnemies.length > 0) {
+      const debuffSkill = skills.find(s => s.type === 'debuff' && comp.currentResource >= s.cost);
+      if (debuffSkill) {
+        const target = aliveEnemies.reduce((a, b) => a.currentHp > b.currentHp ? a : b);
+        const res = debuffSkill.execute(comp, target);
+        if (!res.error) { this.addLog(`[Comp] ${res.text}`); return; }
+      }
+    }
+
+    // Priorität 5: Schaden
+    if (aliveEnemies.length > 0) {
+      // Tank fokussiert stärksten Feind; DPS/Healer killt schwächsten zuerst
+      const target = comp.role === 'TANK'
+        ? aliveEnemies.reduce((a, b) => a.currentHp > b.currentHp ? a : b)
+        : aliveEnemies.reduce((a, b) => a.currentHp < b.currentHp ? a : b);
+
+      const dmgSkill =
+        skills.find(s => s.type === 'damage' && s.cost > 0 && comp.currentResource >= s.cost) ||
+        skills.find(s => s.type === 'damage' && s.cost === 0);
+
+      if (dmgSkill) {
+        const res = this.executeAttack(comp, target, dmgSkill);
+        if (!res.error) { this.addLog(`[Comp] ${res.text}`); return; }
+      }
+    }
+
+    // Fallback
+    this.addLog(`[Comp] ${comp.name} wartet ab.`);
   }
 
-  // FEIND KI
+  // ─── Feind-KI ────────────────────────────────────────────────────────────────
+
   executeEnemyAI(enemy) {
     if (this.isOver) return;
     const aliveHeroes = this.getAliveHeroes();
-    if (aliveHeroes.length === 0) return;
-    
-    let targetHero = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
-    if (Math.random() < 0.3) {
-      const tanks = aliveHeroes.filter(h => h.role === 'TANK' || h.classKey === 'KRIEGER' || h.classKey === 'PALADIN');
-      if (tanks.length > 0) targetHero = tanks[Math.floor(Math.random() * tanks.length)];
+    if (!aliveHeroes.length) return;
+
+    // Zielwahl: 30% Chance auf Tank/Krieger, sonst zufällig
+    let target = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)];
+    if (Math.random() < 0.30) {
+      const frontline = aliveHeroes.filter(h => h.role === 'TANK' || h.classKey === 'KRIEGER' || h.classKey === 'PALADIN');
+      if (frontline.length) target = frontline[Math.floor(Math.random() * frontline.length)];
     }
 
-    let actionText = '';
-    let dmg = enemy.damage;
-    if (enemy.damageDebuff) dmg = Math.round(dmg * (1 - enemy.damageDebuff));
-    if (enemy.damageModifier > 1.0) dmg = Math.round(dmg * enemy.damageModifier);
+    // Skill auswählen
+    const allSkills = enemy.skills || [];
+    const usedSkill = allSkills.find(s => Math.random() < s.chance);
 
-    let hitChance = 0.90 + (enemy.hitChanceModifier || 0);
-    if (Math.random() > hitChance) {
-      this.addLog(`${enemy.name} greift an, aber ${targetHero.name} weicht geschickt aus!`);
+    // Basisschaden berechnen
+    let dmg = Math.round(enemy.damage * (enemy.damageModifier || 1.0));
+    if (enemy.damageDebuff) dmg = Math.round(dmg * (1 - enemy.damageDebuff));
+
+    // AoE-Angriff?
+    const targetsAll = usedSkill?.isAoe;
+    const targets = targetsAll ? aliveHeroes : [target];
+
+    let actionText = '';
+    if (usedSkill) {
+      actionText = `${enemy.name} wirkt '${usedSkill.name}': ${usedSkill.text}. `;
+      if (usedSkill.extraDamage) dmg += usedSkill.extraDamage;
+      if (usedSkill.selfBuff) {
+        enemy.damageModifier = 1.30;
+        actionText += `(${usedSkill.effectText || ''}) `;
+      }
+    } else {
+      actionText = `${enemy.name} greift ${targetsAll ? 'die Gruppe' : target.name} an. `;
+    }
+
+    this.addLog(actionText);
+
+    // Angriff auf jedes Ziel anwenden
+    for (const t of targets) {
+      this.applyEnemyDamageToHero(enemy, t, dmg, usedSkill);
+    }
+  }
+
+  applyEnemyDamageToHero(enemy, hero, rawDmg, skill) {
+    // Dodge-Check
+    const dodgeChance = hero.getDodgeChance ? hero.getDodgeChance() : 0.05;
+    if (Math.random() < dodgeChance) {
+      this.addLog(`  ${hero.name} weicht aus! ✨`);
       return;
     }
 
-    const usableSkills = enemy.skills || [];
-    const skill = usableSkills.find(s => Math.random() < s.chance);
-
-    if (skill) {
-      actionText = `${enemy.name} wirkt '${skill.name}' auf ${targetHero.name}: ${skill.text}. `;
-      if (skill.extraDamage) dmg += skill.extraDamage;
-      if (skill.dot) {
-        targetHero.debuffs.push({
-          name: skill.name, duration: skill.duration, dot: skill.dot, text: `Leidet unter ${skill.name}.`
-        });
-      }
-      if (skill.stun) targetHero.stunned = true;
-      if (skill.selfBuff) {
-        enemy.damageModifier = 1.30;
-        enemy.buffs.push({ name: 'Wütend', duration: 3, effect: (e) => { e.damageModifier = 1.30; } });
-      }
-    } else {
-      actionText = `${enemy.name} greift ${targetHero.name} an. `;
+    // DoT/Stun anwenden (unabhängig von Schaden)
+    if (skill?.dot) {
+      hero.debuffs = hero.debuffs || [];
+      hero.debuffs.push({ name: skill.name, duration: skill.duration || 3, dot: skill.dot });
+    }
+    if (skill?.stun) hero.stunned = true;
+    if (skill?.hitChanceMod) {
+      hero.buffs = hero.buffs || [];
+      hero.buffs.push({
+        name: 'Geblendet', duration: skill.hitChanceDuration || 2,
+        effect: (h) => { h.hitChanceModifier = (h.hitChanceModifier || 0) + skill.hitChanceMod; }
+      });
     }
 
-    const reduction = targetHero.getDamageReduction ? targetHero.getDamageReduction() : 0.3;
-    let finalDamage = Math.max(1, Math.round(dmg * (1 - reduction)));
-    
-    let logPrefix = '';
-    if (targetHero.shield && targetHero.shield > 0) {
-      const absorbed = Math.min(targetHero.shield, finalDamage);
-      targetHero.shield -= absorbed;
-      finalDamage -= absorbed;
-      logPrefix += `(Schild fängt ${absorbed} ab) `;
+    // Schadensberechnung
+    const reduction = hero.getDamageReduction ? hero.getDamageReduction() : 0.10;
+    let finalDmg = Math.max(1, Math.round(rawDmg * (1 - reduction)));
+
+    // damageTakenMultiplier (z.B. Gebet der Besserung)
+    if (hero.damageTakenMultiplier && hero.damageTakenMultiplier !== 1.0) {
+      finalDmg = Math.round(finalDmg * hero.damageTakenMultiplier);
     }
 
-    if (finalDamage > 0) {
-      targetHero.currentHp = Math.max(0, targetHero.currentHp - finalDamage);
-      if (targetHero.classKey === 'KRIEGER') {
-        const rageGen = Math.min(50, Math.floor(finalDamage * 0.4));
-        if (rageGen > 0) {
-          targetHero.currentResource = Math.min(100, targetHero.currentResource + rageGen);
-          logPrefix += `(+${rageGen} Wut) `;
+    // Block-Check
+    const blockChance = hero.getBlockChance ? hero.getBlockChance() : 0;
+    let logSuffix = '';
+    if (blockChance > 0 && Math.random() < blockChance) {
+      const blockVal = hero.getBlockValue ? hero.getBlockValue() : 5;
+      const blocked  = Math.min(finalDmg, blockVal);
+      finalDmg -= blocked;
+      logSuffix += ` [🛡 Geblockt ${blocked}]`;
+
+      // Heiliger Schild: Vergeltungsschaden
+      if (hero.blockRetaliation) {
+        enemy.currentHp = Math.max(0, enemy.currentHp - hero.blockRetaliation);
+        logSuffix += ` [Vergeltung ${hero.blockRetaliation}]`;
+      }
+    }
+
+    // Schild absorbiert
+    if (hero.shield > 0) {
+      const abs = Math.min(hero.shield, finalDmg);
+      hero.shield -= abs; finalDmg -= abs;
+      if (abs > 0) logSuffix += ` [Schild −${abs}]`;
+    }
+
+    // HP abziehen
+    if (finalDmg > 0) {
+      hero.currentHp = Math.max(0, hero.currentHp - finalDmg);
+
+      // Wut-Generierung für Krieger
+      if (hero.classKey === 'KRIEGER') {
+        const rage = Math.min(50, Math.floor(finalDmg * 0.4));
+        if (rage > 0) {
+          hero.currentResource = Math.min(100, hero.currentResource + rage);
+          logSuffix += ` [+${rage} Wut]`;
         }
       }
     }
 
-    this.addLog(`${actionText}${logPrefix}Verursacht ${finalDamage} Schaden.`);
+    this.addLog(`  → ${hero.name}: ${finalDmg} Schaden (${Math.round(reduction * 100)}% Red.)${logSuffix}`);
   }
 
-  checkVictory() {
-    if (this.getAliveEnemies().length === 0) {
-      this.isOver = true;
-      this.victory = true;
-      this.addLog(`Sieg! Alle Feinde wurden bezwungen.`);
-      this.distributeRewards();
-    }
-  }
+  // ─── Boss-Phasen ─────────────────────────────────────────────────────────────
 
-  checkDefeat() {
-    if (this.player.currentHp <= 0) {
-      this.isOver = true;
-      this.victory = false;
-      this.addLog(`Niederlage! ${this.player.name} ist im Kampf gefallen...`);
-    }
-  }
+  checkBossPhaseTransition() {
+    this.enemies.forEach(enemy => {
+      if (!enemy.isBoss || !enemy.phases) return;
+      enemy.phases.forEach(phase => {
+        if (phase.triggered) return;
+        if (enemy.currentHp / enemy.maxHp <= phase.threshold) {
+          phase.triggered = true;
+          this.addLog(`\n⚠️  ${phase.message}\n`);
 
-  distributeRewards() {
-    // XP
-    this.xpEarned = this.enemies.reduce((acc, e) => acc + e.xpReward, 0);
-    const leveledUp = this.player.addXp(this.xpEarned);
-    if (leveledUp) {
-      this.addLog(`★ LEVEL UP! ${this.player.name} erreicht Stufe ${this.player.level}! ★`);
-      // Sync companions
-      if (this.player.party) {
-        this.player.party.forEach(c => c.syncLevel(this.player.level));
-      }
-    }
-
-    // Gold
-    let totalGold = 0;
-    this.enemies.forEach(e => {
-      totalGold += Math.floor(Math.random() * (e.goldRange[1] - e.goldRange[0] + 1) + e.goldRange[0]);
-    });
-    
-    if (this.player.raceKey === 'MENSCH') totalGold = Math.round(totalGold * 1.1);
-    this.player.gold += totalGold;
-    this.goldEarned = totalGold;
-
-    // Loot
-    this.lootEarned = [];
-    this.enemies.forEach(e => {
-      if (e.isBoss) {
-        if (e.name.includes('Spinnenkönigin')) this.lootEarned.push({ name: 'Spinnenkönigin (Boss) Kopf', isQuestItem: true, id: 'Spinnenkönigin (Boss)' });
-        else if (e.name.includes('Goblin-König')) this.lootEarned.push({ name: 'Goblin-König (Boss) Kopf', isQuestItem: true, id: 'Goblin-König (Boss)' });
-      }
-
-      const table = e.lootTable || [];
-      table.forEach(entry => {
-        if (Math.random() < entry.chance) {
-          if (entry.isMaterial) {
-            this.lootEarned.push({ name: entry.id, isMaterial: true });
-          } else {
-            const item = createItem(entry.id);
-            if (item) {
-              this.player.inventory.push(item);
-              this.lootEarned.push(item);
-            }
+          if (phase.extraSkills?.length) {
+            enemy.skills = [...(enemy.skills || []), ...phase.extraSkills];
+          }
+          if (phase.damageMultiplier) {
+            enemy.damage = Math.round(enemy.damage * phase.damageMultiplier);
+            this.addLog(`  ⚔️  ${enemy.name} Schaden erhöht auf ${enemy.damage}!`);
           }
         }
       });
     });
   }
 
+  // ─── Sieg / Niederlage ───────────────────────────────────────────────────────
+
+  checkVictory() {
+    if (this.getAliveEnemies().length === 0) {
+      this.isOver  = true;
+      this.victory = true;
+      this.addLog('🏆 Sieg! Alle Feinde wurden bezwungen.');
+      this.distributeRewards();
+    }
+  }
+
+  checkDefeat() {
+    if (this.player.currentHp <= 0) {
+      this.isOver  = true;
+      this.victory = false;
+      this.addLog(`💀 Niederlage! ${this.player.name} ist gefallen...`);
+    }
+  }
+
+  distributeRewards() {
+    // XP
+    this.xpEarned = this.enemies.reduce((s, e) => s + e.xpReward, 0);
+    const leveledUp = this.player.addXp(this.xpEarned);
+    if (leveledUp) {
+      this.addLog(`⭐ LEVEL UP! ${this.player.name} erreicht Stufe ${this.player.level}!`);
+      if (this.player.party) this.player.party.forEach(c => c.syncLevel(this.player.level));
+    }
+
+    // Gold
+    let gold = 0;
+    this.enemies.forEach(e => {
+      gold += Math.floor(Math.random() * (e.goldRange[1] - e.goldRange[0] + 1) + e.goldRange[0]);
+    });
+    if (this.player.raceKey === 'MENSCH') gold = Math.round(gold * 1.1);
+    this.player.gold += gold;
+    this.goldEarned = gold;
+
+    // Loot
+    this.lootEarned = [];
+    this.enemies.forEach(e => {
+      if (e.isBoss) {
+        if (e.name.includes('Spinnenkönigin')) this.lootEarned.push({ name: 'Spinnenkönigin Kopf', isQuestItem: true, id: 'Spinnenkönigin (Boss)' });
+        else if (e.name.includes('Goblin-König')) this.lootEarned.push({ name: 'Goblin-König Kopf', isQuestItem: true, id: 'Goblin-König (Boss)' });
+      }
+      (e.lootTable || []).forEach(entry => {
+        if (Math.random() < entry.chance) {
+          if (entry.isMaterial) {
+            this.lootEarned.push({ name: entry.id, isMaterial: true });
+          } else {
+            const item = createItem(entry.id);
+            if (item) { this.player.inventory.push(item); this.lootEarned.push(item); }
+          }
+        }
+      });
+    });
+  }
+
+  // ─── Flucht ──────────────────────────────────────────────────────────────────
+
   flee() {
     if (this.enemies.some(e => e.isBoss)) {
       this.addLog('Aus einem Bosskampf kann man nicht fliehen!');
       return false;
     }
-
-    const success = Math.random() < 0.4;
-    if (success) {
-      this.isOver = true;
-      this.victory = false;
-      this.fled = true;
-      this.addLog(`Die Gruppe flieht panisch aus dem Kampf!`);
-    } else {
-      this.addLog(`Flucht fehlgeschlagen!`);
-      this.endPlayerTurn();
+    if (Math.random() < 0.40) {
+      this.isOver = true; this.victory = false; this.fled = true;
+      this.addLog('Die Gruppe flieht aus dem Kampf!');
+      return true;
     }
-    return success;
+    this.addLog('Flucht fehlgeschlagen!');
+    this.currentTurnIndex++;
+    this.nextTurn();
+    return false;
   }
 }

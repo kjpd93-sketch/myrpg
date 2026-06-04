@@ -35,12 +35,12 @@ export const CLASSES = {
       TANK: {
         name: 'Tank (Schutz)',
         description: 'Fokus auf Verteidigung, Schildnutzung und Schadensreduktion.',
-        specialStats: { blockChance: 0.1, armorBonus: 0.15 }
+        specialStats: { blockChance: 0.12, armorBonus: 0.15 }
       },
       FUROR: {
         name: 'Furor (Schaden)',
         description: 'Nutzt zwei Waffen gleichzeitig für schnellen, hohen Schaden.',
-        specialStats: { dualWield: true, critChance: 0.05 }
+        specialStats: { dualWield: true, critChance: 0.06 }
       }
     }
   },
@@ -53,12 +53,12 @@ export const CLASSES = {
       TANK: {
         name: 'Tank (Schutz)',
         description: 'Kombiniert schwere Rüstung und heilige Magie zur Verteidigung.',
-        specialStats: { blockChance: 0.08, armorBonus: 0.1 }
+        specialStats: { blockChance: 0.10, armorBonus: 0.10 }
       },
       VERGELTER: {
         name: 'Vergelter (Schaden & Heilung)',
         description: 'Teilt Schaden mit zweihändigen Waffen aus und unterstützt mit Heilzaubern.',
-        specialStats: { healingPower: 0.1, critChance: 0.03 }
+        specialStats: { healingPower: 0.10, critChance: 0.04 }
       }
     }
   },
@@ -76,7 +76,7 @@ export const CLASSES = {
       EIS: {
         name: 'Eis',
         description: 'Kontrolliert Gegner durch Verlangsamung und schützt sich mit Eisschilden.',
-        specialStats: { armorBonus: 0.2, spellPower: 0.02 }
+        specialStats: { armorBonus: 0.20, spellPower: 0.02 }
       }
     }
   },
@@ -89,7 +89,7 @@ export const CLASSES = {
       SCHATTEN: {
         name: 'Schatten',
         description: 'Nutzt Schattenmagie, um Lebenskraft zu entziehen und Schaden anzurichten.',
-        specialStats: { shadowDamage: 0.1, lifeSteal: 0.05 }
+        specialStats: { shadowDamage: 0.10, lifeSteal: 0.05 }
       },
       HEILUNG: {
         name: 'Heilung',
@@ -103,57 +103,47 @@ export const CLASSES = {
 export class Character {
   constructor(name, gender, raceKey, classKey, specKey) {
     this.name = name;
-    this.gender = gender; // 'm' or 'w'
+    this.gender = gender;
     this.raceKey = raceKey;
     this.classKey = classKey;
     this.specKey = specKey;
 
     this.level = 1;
     this.xp = 0;
-    this.gold = 100; // Startgold
+    this.gold = 100;
     this.skillPoints = 0;
-    this.party = []; // Companions Array
+    this.party = [];
 
-    // Ausrüstung initialisieren (leer)
     this.equipment = {
-      head: null,
-      chest: null,
-      hands: null,
-      legs: null,
-      feet: null,
-      mainHand: null,
-      offHand: null
+      head: null, chest: null, hands: null,
+      legs: null, feet: null, mainHand: null, offHand: null
     };
 
-    // Inventar (Startgegenstände)
     this.inventory = [];
-
-    // Talentpunkte-Verteilung (Key: SkillId, Value: Level)
     this.talents = {};
 
     this.resetStats();
   }
 
-  // Setzt die Werte basierend auf Level, Rasse und Ausrüstung neu auf
   resetStats() {
     const race = RACES[this.raceKey];
     const charClass = CLASSES[this.classKey];
     const spec = charClass.specs[this.specKey];
 
-    // 1. Basiswerte der Klasse + Zuwachs pro Level
+    // 1. Basiswerte + Levelzuwachs
     const levelStats = {
-      strength: charClass.baseStats.strength + (this.level - 1) * 2,
-      agility: charClass.baseStats.agility + (this.level - 1) * 1.5,
+      strength:  charClass.baseStats.strength  + (this.level - 1) * 2,
+      agility:   charClass.baseStats.agility   + (this.level - 1) * 1.5,
       intellect: charClass.baseStats.intellect + (this.level - 1) * 2,
-      stamina: charClass.baseStats.stamina + (this.level - 1) * 2.5
+      stamina:   charClass.baseStats.stamina   + (this.level - 1) * 2.5
     };
 
-    // 2. Rassenboni anwenden
+    // 2. Rassenboni
     if (this.raceKey === 'MENSCH') {
-      levelStats.strength += race.bonuses.stats;
-      levelStats.agility += race.bonuses.stats;
+      levelStats.strength  += race.bonuses.stats;
+      levelStats.agility   += race.bonuses.stats;
       levelStats.intellect += race.bonuses.stats;
-      levelStats.stamina += race.bonuses.stats;
+      levelStats.stamina   += race.bonuses.stats;
     } else {
       for (const stat in race.bonuses.stats) {
         levelStats[stat] += race.bonuses.stats[stat];
@@ -163,175 +153,183 @@ export class Character {
     // 3. Ausrüstungswerte addieren
     this.stats = { ...levelStats };
     this.bonusStats = { strength: 0, agility: 0, intellect: 0, stamina: 0, armor: 0, damage: 0, spellPower: 0, healPower: 0 };
+    this.bonusCritChance = 0;
+    this.bonusBlockChance = 0;
+    this.damageTakenMultiplier = 1.0;
 
     for (const slot in this.equipment) {
       const item = this.equipment[slot];
-      if (item) {
-        if (item.stats) {
-          for (const stat in item.stats) {
-            if (this.stats[stat] !== undefined) {
-              this.stats[stat] += item.stats[stat];
-              this.bonusStats[stat] += item.stats[stat];
-            } else if (this.bonusStats[stat] !== undefined) {
-              this.bonusStats[stat] += item.stats[stat];
-            }
+      if (item && item.stats) {
+        for (const stat in item.stats) {
+          if (this.stats[stat] !== undefined) {
+            this.stats[stat] += item.stats[stat];
+            this.bonusStats[stat] = (this.bonusStats[stat] || 0) + item.stats[stat];
+          } else if (this.bonusStats[stat] !== undefined) {
+            this.bonusStats[stat] += item.stats[stat];
           }
         }
       }
     }
 
-    // 4. Max HP berechnen
-    let baseMaxHp = this.stats.stamina * 10;
-    if (this.raceKey === 'ZWERG') {
-      baseMaxHp = Math.round(baseMaxHp * race.bonuses.hpMultiplier);
-    }
+    // 4. Max HP — Ausdauer * 11, Zwerg +10%
+    let baseMaxHp = Math.round(this.stats.stamina * 11);
+    if (this.raceKey === 'ZWERG') baseMaxHp = Math.round(baseMaxHp * race.bonuses.hpMultiplier);
     this.maxHp = baseMaxHp;
-    if (this.currentHp === undefined || this.currentHp > this.maxHp) {
-      this.currentHp = this.maxHp;
-    }
+    if (this.currentHp === undefined || this.currentHp > this.maxHp) this.currentHp = this.maxHp;
 
-    // 5. Max Ressource berechnen
+    // 5. Max Ressource
     if (charClass.resourceType === 'MANA') {
-      let baseMaxMana = 100 + (this.level - 1) * 15 + this.stats.intellect * 5;
-      if (this.raceKey === 'GNOM') {
-        baseMaxMana = Math.round(baseMaxMana * race.bonuses.manaMultiplier);
-      }
+      let baseMaxMana = 80 + (this.level - 1) * 12 + this.stats.intellect * 5;
+      if (this.raceKey === 'GNOM') baseMaxMana = Math.round(baseMaxMana * race.bonuses.manaMultiplier);
       this.maxResource = baseMaxMana;
-      if (this.currentResource === undefined) {
-        this.currentResource = this.maxResource;
-      } else if (this.currentResource > this.maxResource) {
-        this.currentResource = this.maxResource;
-      }
+      if (this.currentResource === undefined) this.currentResource = this.maxResource;
+      else if (this.currentResource > this.maxResource) this.currentResource = this.maxResource;
     } else {
-      // Krieger Wut ist immer maximal 100
       this.maxResource = 100;
-      if (this.currentResource === undefined) {
-        this.currentResource = 0; // Wut startet bei 0
-      }
+      if (this.currentResource === undefined) this.currentResource = 0;
     }
   }
 
-  // Berechnet die XP, die für das nächste Level benötigt wird
-  getXpNeeded() {
-    return this.level * 100 + (this.level - 1) * 50;
+  // ─── Sekundärwerte ────────────────────────────────────────────────────────
+
+  /** Physischer Schaden: Waffenschaden + Stärke (oder Agility) × 0.5 */
+  getPhysicalDamage() {
+    const mainHand = this.equipment.mainHand;
+    let baseDmg = 3;
+    if (mainHand && mainHand.damage) baseDmg = mainHand.damage;
+
+    const scalingStat = (this.classKey === 'KRIEGER' || this.classKey === 'PALADIN')
+      ? this.stats.strength
+      : this.stats.agility;
+
+    let dmg = Math.round(baseDmg + scalingStat * 0.5);
+
+    // Furor Krieger: Nebenhand gibt 50% Schaden zusätzlich
+    if (this.classKey === 'KRIEGER' && this.specKey === 'FUROR' && this.equipment.offHand?.damage) {
+      dmg += Math.round(this.equipment.offHand.damage * 0.5);
+    }
+
+    return dmg;
   }
 
-  // Fügt XP hinzu und führt ggf. Level-Up durch
+  /** Zaubermacht: Intelligenz × 0.70 + Item-Boni */
+  getSpellPower() {
+    let itemBonus = 0;
+    if (this.equipment.offHand?.spellPower) itemBonus += this.equipment.offHand.spellPower;
+    if (this.equipment.mainHand?.spellPower) itemBonus += this.equipment.mainHand.spellPower;
+
+    let specBonus = 1.0;
+    const spec = CLASSES[this.classKey].specs[this.specKey];
+    if (spec.specialStats.spellPower) specBonus += spec.specialStats.spellPower;
+
+    return Math.round((this.stats.intellect * 0.70 + itemBonus) * specBonus);
+  }
+
+  /** Krit-Chance (physisch): 5% Base + 0.1% pro Agility-Punkt + Spec-Bonus */
+  getCritChance() {
+    let base = 0.05 + this.stats.agility * 0.001;
+    const spec = CLASSES[this.classKey].specs[this.specKey];
+    if (spec.specialStats.critChance) base += spec.specialStats.critChance;
+    return Math.min(base + (this.bonusCritChance || 0), 0.75);
+  }
+
+  /** Krit-Chance (Zauber): 3% Base + 0.1% pro Intelligenz-Punkt + Spec-Bonus */
+  getSpellCritChance() {
+    let base = 0.03 + this.stats.intellect * 0.001;
+    const spec = CLASSES[this.classKey].specs[this.specKey];
+    if (spec.specialStats.spellCrit) base += spec.specialStats.spellCrit;
+    return Math.min(base + (this.bonusCritChance || 0), 0.75);
+  }
+
+  /** Ausweichchance: 4% Base + 0.15% pro Agility + Rassenboni */
+  getDodgeChance() {
+    let base = 0.04 + this.stats.agility * 0.0015;
+    if (this.raceKey === 'NACHTELF') base += RACES.NACHTELF.bonuses.dodgeChance;
+    return Math.min(base, 0.40);
+  }
+
+  /** Blockchance: nur mit Schild; Spec-Basis + Buff-Boni */
+  getBlockChance() {
+    if (!this.equipment.offHand?.armor) return 0;
+    const spec = CLASSES[this.classKey].specs[this.specKey];
+    return Math.min((spec.specialStats.blockChance || 0) + (this.bonusBlockChance || 0), 0.60);
+  }
+
+  /** Blockwert: Stärke × 0.3 + Schild-Rüstung × 0.15 */
+  getBlockValue() {
+    if (!this.equipment.offHand?.armor) return 0;
+    return Math.round(this.stats.strength * 0.3 + this.equipment.offHand.armor * 0.15);
+  }
+
+  /** Rüstungswert gesamt */
+  getArmor() {
+    let totalArmor = 0;
+    for (const slot in this.equipment) {
+      if (this.equipment[slot]?.armor) totalArmor += this.equipment[slot].armor;
+    }
+    totalArmor += Math.floor(this.stats.agility * 0.2);
+
+    const spec = CLASSES[this.classKey].specs[this.specKey];
+    if (spec.specialStats.armorBonus) totalArmor = Math.round(totalArmor * (1 + spec.specialStats.armorBonus));
+
+    return totalArmor;
+  }
+
+  /**
+   * Schadensreduktion in % durch Rüstung.
+   * Formel: armor / (armor + level×25 + 150), cap 75%
+   * Entspricht ~12% bei Level-1-Startrüstung, ~35% bei vollständigem Plattenset Level 5.
+   */
+  getDamageReduction() {
+    const armor = this.getArmor();
+    const reduction = armor / (armor + this.level * 25 + 150);
+    return Math.min(reduction, 0.75);
+  }
+
+  // ─── Progression ─────────────────────────────────────────────────────────
+
+  /**
+   * XP-Kurve: 100 × level^1.75
+   * Level 1→2: 100 XP | 2→3: 336 | 3→4: 684 | 4→5: 1131 | 5→6: 1660
+   */
+  getXpNeeded() {
+    return Math.round(100 * Math.pow(this.level, 1.75));
+  }
+
   addXp(amount) {
     this.xp += amount;
     let leveledUp = false;
-    let xpNeeded = this.getXpNeeded();
 
-    while (this.xp >= xpNeeded) {
-      this.xp -= xpNeeded;
+    while (this.xp >= this.getXpNeeded()) {
+      this.xp -= this.getXpNeeded();
       this.level++;
       this.skillPoints++;
       leveledUp = true;
-      xpNeeded = this.getXpNeeded();
     }
 
     if (leveledUp) {
       this.resetStats();
-      this.currentHp = this.maxHp; // Heilen beim Level-Up
-      if (CLASSES[this.classKey].resourceType === 'MANA') {
-        this.currentResource = this.maxResource;
-      }
+      this.currentHp = this.maxHp;
+      if (CLASSES[this.classKey].resourceType === 'MANA') this.currentResource = this.maxResource;
     }
 
     return leveledUp;
   }
 
-  // Berechnet physischen Schaden basierend auf Waffe & Stärke/Beweglichkeit
-  getPhysicalDamage() {
-    const mainHandItem = this.equipment.mainHand;
-    let baseDmg = 3; // Faustschaden
-    if (mainHandItem && mainHandItem.damage) {
-      baseDmg = mainHandItem.damage;
-    }
+  // ─── Sonstiges ───────────────────────────────────────────────────────────
 
-    // Skalierung: Krieger/Paladin mit Stärke, andere mit Stärke/Beweglichkeit
-    const scalingStat = (this.classKey === 'KRIEGER' || this.classKey === 'PALADIN') 
-      ? this.stats.strength 
-      : this.stats.agility;
-
-    return Math.round(baseDmg + scalingStat * 0.5);
-  }
-
-  // Berechnet Zaubermacht basierend auf Intelligenz und Relikten/Waffen
-  getSpellPower() {
-    const offHandItem = this.equipment.offHand;
-    let itemBonus = 0;
-    if (offHandItem && offHandItem.spellPower) {
-      itemBonus += offHandItem.spellPower;
-    }
-    if (this.equipment.mainHand && this.equipment.mainHand.spellPower) {
-      itemBonus += this.equipment.mainHand.spellPower;
-    }
-
-    // Spezifische Spec-Multiplikatoren
-    let specBonus = 1.0;
-    if (this.classKey === 'MAGIER') {
-      const spec = CLASSES.MAGIER.specs[this.specKey];
-      if (spec.specialStats.spellPower) {
-        specBonus += spec.specialStats.spellPower;
-      }
-    }
-
-    return Math.round((this.stats.intellect * 0.8 + itemBonus) * specBonus);
-  }
-
-  // Berechnet Rüstungswert
-  getArmor() {
-    let totalArmor = 0;
-    for (const slot in this.equipment) {
-      const item = this.equipment[slot];
-      if (item && item.armor) {
-        totalArmor += item.armor;
-      }
-    }
-
-    // Rüstungsbonus durch Agilität
-    totalArmor += Math.floor(this.stats.agility * 0.2);
-
-    // Spezialisierungs-Bonus (z.B. Krieger/Paladin Tank, Eis-Magier)
-    const charClass = CLASSES[this.classKey];
-    const spec = charClass.specs[this.specKey];
-    if (spec.specialStats.armorBonus) {
-      totalArmor = Math.round(totalArmor * (1 + spec.specialStats.armorBonus));
-    }
-
-    return totalArmor;
-  }
-
-  // Berechnet Schadensreduktion in % basierend auf Rüstung
-  getDamageReduction() {
-    const armor = this.getArmor();
-    // Formel für Schadensreduktion: armor / (armor + level * 20 + 100)
-    const reduction = armor / (armor + this.level * 20 + 100);
-    return Math.min(reduction, 0.75); // Cap bei 75%
-  }
-
-  // Rasten im Gasthaus
   rest(cost, regenerationPercent) {
     if (this.gold < cost) return false;
     this.gold -= cost;
-    
     this.healPercent(regenerationPercent);
-
-    // Companions auch heilen
-    if (this.party) {
-      this.party.forEach(comp => comp.healPercent(regenerationPercent));
-    }
+    if (this.party) this.party.forEach(c => c.healPercent(regenerationPercent));
     return true;
   }
 
-  healPercent(regenerationPercent) {
-    const hpRegen = Math.round(this.maxHp * regenerationPercent);
-    this.currentHp = Math.min(this.maxHp, this.currentHp + hpRegen);
-
+  healPercent(pct) {
+    this.currentHp = Math.min(this.maxHp, this.currentHp + Math.round(this.maxHp * pct));
     if (CLASSES[this.classKey].resourceType === 'MANA') {
-      const manaRegen = Math.round(this.maxResource * regenerationPercent);
-      this.currentResource = Math.min(this.maxResource, this.currentResource + manaRegen);
+      this.currentResource = Math.min(this.maxResource, this.currentResource + Math.round(this.maxResource * pct));
     }
   }
 }
@@ -339,21 +337,17 @@ export class Character {
 export class Companion extends Character {
   constructor(name, gender, raceKey, classKey, specKey, role) {
     super(name, gender, raceKey, classKey, specKey);
-    this.role = role; // 'HEALER', 'TANK', 'DAMAGE'
-    this.gold = 0; // Companions use player's gold
+    this.role = role; // 'HEALER' | 'TANK' | 'DAMAGE'
+    this.gold = 0;
   }
 
-  // Companions get auto-leveled based on player
   syncLevel(playerLevel) {
     while (this.level < playerLevel) {
       this.level++;
       this.skillPoints++;
       this.resetStats();
       this.currentHp = this.maxHp;
-      if (CLASSES[this.classKey].resourceType === 'MANA') {
-        this.currentResource = this.maxResource;
-      }
+      if (CLASSES[this.classKey].resourceType === 'MANA') this.currentResource = this.maxResource;
     }
   }
 }
-

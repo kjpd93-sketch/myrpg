@@ -10,7 +10,7 @@ export const QUEST_TEMPLATES = [
     targetType: 'kill_monster',
     targetId: 'Riesenspinne',
     targetCount: 5,
-    xpReward: 120,
+    xpReward: 100,
     goldReward: 50,
     difficulty: 'Leicht'
   },
@@ -21,7 +21,7 @@ export const QUEST_TEMPLATES = [
     targetType: 'collect_loot',
     targetId: 'Spinnenbein',
     targetCount: 6,
-    xpReward: 150,
+    xpReward: 120,
     goldReward: 65,
     difficulty: 'Leicht'
   },
@@ -32,7 +32,7 @@ export const QUEST_TEMPLATES = [
     targetType: 'kill_monster',
     targetId: 'Goblin',
     targetCount: 6,
-    xpReward: 200,
+    xpReward: 160,
     goldReward: 80,
     difficulty: 'Mittel'
   },
@@ -43,7 +43,7 @@ export const QUEST_TEMPLATES = [
     targetType: 'kill_any',
     targetId: 'any',
     targetCount: 12,
-    xpReward: 350,
+    xpReward: 280,
     goldReward: 150,
     difficulty: 'Mittel'
   },
@@ -54,7 +54,7 @@ export const QUEST_TEMPLATES = [
     targetType: 'kill_boss',
     targetId: 'Spinnenkönigin (Boss)',
     targetCount: 1,
-    xpReward: 600,
+    xpReward: 480,
     goldReward: 300,
     difficulty: 'Schwer (Boss)'
   },
@@ -65,7 +65,7 @@ export const QUEST_TEMPLATES = [
     targetType: 'kill_boss',
     targetId: 'Goblin-König (Boss)',
     targetCount: 1,
-    xpReward: 800,
+    xpReward: 640,
     goldReward: 400,
     difficulty: 'Schwer (Boss)'
   }
