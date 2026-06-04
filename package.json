@@ -1,0 +1,12 @@
+{
+  "name": "rpg-dungeon-crawler",
+  "version": "1.0.0",
+  "description": "A standalone P&P RPG D&D Dungeon Crawler built with Electron.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^30.0.1"
+  }
+}
