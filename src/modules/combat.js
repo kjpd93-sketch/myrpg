@@ -487,6 +487,11 @@ export class Combat {
     //    (bonusCritChance, bonusBlockChance, damageTakenMultiplier werden dabei genullt)
     if (isHeroSide && target.resetStats) target.resetStats();
 
+    // Passiv-Mana-Regen (z.B. Heilige Konzentration für Priester/Heilung)
+    if (isHeroSide && target.manaRegenPassive > 0 && target.currentResource !== undefined) {
+      target.currentResource = Math.min(target.maxResource, target.currentResource + target.manaRegenPassive);
+    }
+
     // 2. DANN Buff-Effekte anwenden — so bleiben ihre Werte für den Zug erhalten
     if (target.buffs?.length) {
       target.buffs.forEach(buff => {
@@ -554,6 +559,12 @@ export class Combat {
       if (Math.random() < critChance) {
         const extra = Math.round(result.damage * 0.75);
         target.currentHp = Math.max(0, target.currentHp - extra);
+
+        // Proc: Blutfieber (KRIEGER/FUROR) → +8 Wut bei Crit
+        if (caster.hasTalent?.('KRIEGER_BLOOD_FRENZY')) {
+          caster.currentResource = Math.min(100, (caster.currentResource || 0) + 8);
+        }
+
         return {
           ...result,
           text: result.text + ` 💥 KRIT! (+${extra})`,
@@ -631,8 +642,24 @@ export class Combat {
               SKILL_DATABASE.KRIEGER_AUTO];
     }
     if (classKey === 'MAGIER') {
+      if (specKey === 'ARKAN') {
+        return [SKILL_DATABASE.MAGIER_ARCANE_BLAST, SKILL_DATABASE.MAGIER_ARCANE_MISSILES,
+                SKILL_DATABASE.MAGIER_COUNTERSPELL, SKILL_DATABASE.MAGIER_AUTO];
+      }
       return [SKILL_DATABASE.MAGIER_FIREBALL, SKILL_DATABASE.MAGIER_FROSTBOLT,
               SKILL_DATABASE.MAGIER_ICE_BARRIER, SKILL_DATABASE.MAGIER_AUTO];
+    }
+    if (classKey === 'KRIEGER' && specKey === 'WAFFEN') {
+      return [SKILL_DATABASE.KRIEGER_MORTAL_STRIKE, SKILL_DATABASE.KRIEGER_HEROIC_STRIKE,
+              SKILL_DATABASE.KRIEGER_BLADESTORM, SKILL_DATABASE.KRIEGER_AUTO];
+    }
+    if (classKey === 'PALADIN' && specKey === 'HEILIG') {
+      return [SKILL_DATABASE.PALADIN_HOLY_LIGHT, SKILL_DATABASE.PALADIN_BEACON,
+              SKILL_DATABASE.PALADIN_CONSECRATION, SKILL_DATABASE.PALADIN_AUTO];
+    }
+    if (classKey === 'PRIESTER' && specKey === 'DISZIPLIN') {
+      return [SKILL_DATABASE.PRIESTER_PENANCE, SKILL_DATABASE.PRIESTER_DIVINE_AEGIS,
+              SKILL_DATABASE.PRIESTER_PAIN_SUPRESSION, SKILL_DATABASE.PRIESTER_AUTO];
     }
     return [];
   }
@@ -797,9 +824,18 @@ export class Combat {
       });
     }
 
+    // Party-Aura Schadensreduktion prüfen (Heilige Aura / Disziplin-Aura)
+    let auraReduction = 0;
+    this.heroes.forEach(h => {
+      if (h.currentHp > 0) {
+        if (h.hasTalent?.('PALADIN_HOLY_AURA')) auraReduction = Math.max(auraReduction, 0.05 * (h.holyAuraLevel || 1));
+        if (h.hasTalent?.('PRIESTER_DISC_PASSIVE')) auraReduction = Math.max(auraReduction, 0.04 * (h.discAuraLevel || 1));
+      }
+    });
+
     // Schadensberechnung
     const reduction = hero.getDamageReduction ? hero.getDamageReduction() : 0.10;
-    let finalDmg = Math.max(1, Math.round(rawDmg * (1 - reduction)));
+    let finalDmg = Math.max(1, Math.round(rawDmg * (1 - reduction) * (1 - auraReduction)));
 
     // damageTakenMultiplier (z.B. Gebet der Besserung)
     if (hero.damageTakenMultiplier && hero.damageTakenMultiplier !== 1.0) {
@@ -814,6 +850,15 @@ export class Combat {
       const blocked  = Math.min(finalDmg, blockVal);
       finalDmg -= blocked;
       logSuffix += ` [🛡 Geblockt ${blocked}]`;
+
+      // Proc: Eisenfestung (+8 Wut bei Block)
+      if (hero.hasTalent?.('KRIEGER_IRON_FORTRESS') && hero.classKey === 'KRIEGER') {
+        hero.currentResource = Math.min(100, (hero.currentResource || 0) + 8);
+      }
+      // Proc: Heilige Pflicht (+10 LP bei Block)
+      if (hero.hasTalent?.('PALADIN_SACRED_DUTY') && hero.classKey === 'PALADIN') {
+        hero.currentHp = Math.min(hero.maxHp, hero.currentHp + 10);
+      }
 
       // Heiliger Schild: Vergeltungsschaden
       if (hero.blockRetaliation) {

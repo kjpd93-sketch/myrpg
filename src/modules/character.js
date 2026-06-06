@@ -41,6 +41,11 @@ export const CLASSES = {
         name: 'Furor (Schaden)',
         description: 'Nutzt zwei Waffen gleichzeitig für schnellen, hohen Schaden.',
         specialStats: { dualWield: true, critChance: 0.06 }
+      },
+      WAFFEN: {
+        name: 'Waffen (Meister)',
+        description: 'Beherrscht jede Waffe zur Perfektion. +15% physischer Schaden, fokussierter Einzelziel-Burst.',
+        specialStats: { weaponMastery: 0.15, critChance: 0.05 }
       }
     }
   },
@@ -59,6 +64,11 @@ export const CLASSES = {
         name: 'Vergelter (Schaden & Heilung)',
         description: 'Teilt Schaden mit zweihändigen Waffen aus und unterstützt mit Heilzaubern.',
         specialStats: { healingPower: 0.10, critChance: 0.04 }
+      },
+      HEILIG: {
+        name: 'Heilig (Licht)',
+        description: 'Channeler heiliger Energie. Starke Gruppen-Heilung und Schutz-Auren für die gesamte Party.',
+        specialStats: { healingPower: 0.20, spellPower: 0.03 }
       }
     }
   },
@@ -77,6 +87,11 @@ export const CLASSES = {
         name: 'Eis',
         description: 'Kontrolliert Gegner durch Verlangsamung und schützt sich mit Eisschilden.',
         specialStats: { armorBonus: 0.20, spellPower: 0.02 }
+      },
+      ARKAN: {
+        name: 'Arkan (Macht)',
+        description: 'Meister reiner magischer Energie. Höchster Burst-Schaden, aber Mana-intensiv.',
+        specialStats: { spellPower: 0.10, spellCrit: 0.05 }
       }
     }
   },
@@ -95,6 +110,11 @@ export const CLASSES = {
         name: 'Heilung',
         description: 'Hervorragender Heiler, der Verbündete schützt und Wunden schließt.',
         specialStats: { healingPower: 0.15, manaRegenRate: 2 }
+      },
+      DISZIPLIN: {
+        name: 'Disziplin (Schild)',
+        description: 'Schützt die Gruppe durch mächtige Absorptionsschilde. Hybrid aus Schaden und Schutz.',
+        specialStats: { absorptionBonus: 0.25, healingPower: 0.10 }
       }
     }
   }
@@ -121,6 +141,7 @@ export class Character {
 
     this.inventory = [];
     this.talents = {};
+    this.passiveEffects = {}; // Registrierte Passiv-Talenteffekte → werden in resetStats angewendet
 
     this.resetStats();
   }
@@ -156,6 +177,9 @@ export class Character {
     this.bonusCritChance = 0;
     this.bonusBlockChance = 0;
     this.damageTakenMultiplier = 1.0;
+    this.physDmgMultiplier = 1.0;
+    this.bonusHealPower = 0;
+    this.manaRegenPassive = 0; // Mana pro Runde durch Passiv-Talente
 
     for (const slot in this.equipment) {
       const item = this.equipment[slot];
@@ -169,6 +193,11 @@ export class Character {
           }
         }
       }
+    }
+
+    // 3b. Passive Talenteffekte anwenden (NACH Ausrüstung, BEVOR HP/Mana berechnet wird)
+    for (const effectFn of Object.values(this.passiveEffects || {})) {
+      if (typeof effectFn === 'function') effectFn(this);
     }
 
     // 4. Max HP — Ausdauer * 11, Zwerg +10%
@@ -207,6 +236,16 @@ export class Character {
     // Furor Krieger: Nebenhand gibt 50% Schaden zusätzlich
     if (this.classKey === 'KRIEGER' && this.specKey === 'FUROR' && this.equipment.offHand?.damage) {
       dmg += Math.round(this.equipment.offHand.damage * 0.5);
+    }
+
+    // Waffenmeister: passiver Schadensbonus via specialStats.weaponMastery
+    const specData = CLASSES[this.classKey]?.specs[this.specKey];
+    if (specData?.specialStats?.weaponMastery) {
+      dmg = Math.round(dmg * (1 + specData.specialStats.weaponMastery));
+    }
+    // Passives Schadensbonus-Flag (z.B. aus Passiv-Talenten via passiveEffects)
+    if (this.physDmgMultiplier && this.physDmgMultiplier !== 1.0) {
+      dmg = Math.round(dmg * this.physDmgMultiplier);
     }
 
     return dmg;
@@ -253,6 +292,20 @@ export class Character {
     if (!this.equipment.offHand?.armor) return 0;
     const spec = CLASSES[this.classKey].specs[this.specKey];
     return Math.min((spec.specialStats.blockChance || 0) + (this.bonusBlockChance || 0), 0.60);
+  }
+
+  /** Heilmacht-Multiplikator: spec-basiert + Passiv-Boni */
+  getHealPower() {
+    let mult = 1.0;
+    const spec = CLASSES[this.classKey]?.specs[this.specKey];
+    if (spec?.specialStats?.healingPower) mult += spec.specialStats.healingPower;
+    if (this.bonusHealPower) mult += this.bonusHealPower;
+    return mult;
+  }
+
+  /** Prüft ob ein Talent auf mindestens minLevel gelernt wurde */
+  hasTalent(talentId, minLevel = 1) {
+    return (this.talents?.[talentId] || 0) >= minLevel;
   }
 
   /** Blockwert: Stärke × 0.3 + Schild-Rüstung × 0.15 */
