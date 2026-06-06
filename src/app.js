@@ -184,6 +184,11 @@ class App {
       const warningHtml = !isEmpty && mode === 'new'
         ? `<div style="color:#c0392b; font-size:0.78rem; margin-top:0.25rem;">⚠ Wird überschrieben</div>`
         : '';
+      const deleteBtn = !isEmpty
+        ? `<button class="danger-btn btn-delete-slot" data-slot="${slotId}"
+             style="padding:0.35rem 0.7rem; font-size:0.8rem; min-width:unset;"
+             title="Spielstand löschen">🗑</button>`
+        : '';
 
       return `
         <div style="
@@ -199,16 +204,41 @@ class App {
             <div style="font-size:0.9rem;">${infoHtml}</div>
             ${warningHtml}
           </div>
-          <button
-            class="premium-btn small btn-select-slot"
-            data-slot="${slotId}"
-            data-mode="${mode}"
-            ${disabled ? 'disabled' : ''}
-            style="min-width:110px; ${disabled ? 'opacity:0.4;' : ''}">
-            ${mode === 'new' ? 'Hier starten' : 'Laden'}
-          </button>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <button
+              class="premium-btn small btn-select-slot"
+              data-slot="${slotId}"
+              data-mode="${mode}"
+              ${disabled ? 'disabled' : ''}
+              style="min-width:110px; ${disabled ? 'opacity:0.4;' : ''}">
+              ${mode === 'new' ? 'Hier starten' : 'Laden'}
+            </button>
+            ${deleteBtn}
+          </div>
         </div>`;
     }).join('');
+
+    // Löschen-Handler
+    list.querySelectorAll('.btn-delete-slot').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const slotId = parseInt(btn.dataset.slot);
+        const raw = localStorage.getItem(`dungeon_save_slot_${slotId}`);
+        let charName = `Slot ${slotId}`;
+        try { charName = JSON.parse(raw).name; } catch(e) {}
+        if (confirm(`Spielstand "${charName}" (Slot ${slotId}) wirklich löschen?\nDieser Vorgang kann nicht rückgängig gemacht werden.`)) {
+          localStorage.removeItem(`dungeon_save_slot_${slotId}`);
+          // last_slot zurücksetzen falls dieser Slot der letzte war
+          if (localStorage.getItem('dungeon_last_slot') === String(slotId)) {
+            // Nächsten belegten Slot als last_slot setzen, oder komplett entfernen
+            const next = [1,2,3].find(s => s !== slotId && localStorage.getItem(`dungeon_save_slot_${s}`));
+            next ? localStorage.setItem('dungeon_last_slot', String(next))
+                 : localStorage.removeItem('dungeon_last_slot');
+          }
+          this.renderSaveSlots(mode); // Liste neu aufbauen
+          this.updateMainMenuButtons();
+        }
+      });
+    });
 
     // Click-Handler an die Slot-Buttons binden
     list.querySelectorAll('.btn-select-slot').forEach(btn => {
