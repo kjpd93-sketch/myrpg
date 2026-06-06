@@ -15,7 +15,9 @@ class App {
     this.player = null;
     this.dungeonRun = null;
     this.combat = null;
-    this.currentScreen = 'screen-char-creation';
+    this.currentScreen = 'screen-main-menu';
+    this.currentSlot = null;         // Aktiver Speicherslot (1–3)
+    this.pendingNewGameSlot = null;  // Gewählter Slot für neues Spiel
 
     // UI-Elemente
     this.screens = document.querySelectorAll('.screen');
@@ -28,14 +30,14 @@ class App {
   init() {
     this.setupCharacterCreation();
     this.setupEventListeners();
-    this.showScreen('screen-char-creation');
-    this.loadGameFromLocalStorage();
+    this.setupMainMenu();
+    this.showScreen('screen-main-menu');
   }
 
-  // --- AUTOMATISCHES SPEICHERN & LADEN ---
+  // --- SPEICHERN & LADEN (3 Slots) ---
+
   saveGameToLocalStorage() {
-    if (!this.player) return;
-    // Wir packen den Charakter-Zustand in ein einfaches JSON-Objekt
+    if (!this.player || !this.currentSlot) return;
     const saveState = {
       name: this.player.name,
       gender: this.player.gender,
@@ -54,11 +56,12 @@ class App {
       currentHp: this.player.currentHp,
       currentResource: this.player.currentResource
     };
-    localStorage.setItem('dungeon_crawler_save', JSON.stringify(saveState));
+    localStorage.setItem(`dungeon_save_slot_${this.currentSlot}`, JSON.stringify(saveState));
+    localStorage.setItem('dungeon_last_slot', String(this.currentSlot));
   }
 
-  loadGameFromLocalStorage() {
-    const data = localStorage.getItem('dungeon_crawler_save');
+  loadFromSlot(slotId) {
+    const data = localStorage.getItem(`dungeon_save_slot_${slotId}`);
     if (!data) return;
     try {
       const state = JSON.parse(data);
@@ -69,28 +72,152 @@ class App {
       this.player.skillPoints = state.skillPoints;
       this.player.equipment = state.equipment;
       this.player.inventory = state.inventory;
-      this.player.talents = state.talents;
-      this.player.completedQuests = state.completedQuests;
-      this.player.activeQuests = state.activeQuests;
+      this.player.talents = state.talents || {};
+      this.player.completedQuests = state.completedQuests || [];
+      this.player.activeQuests = state.activeQuests || [];
       this.player.party = state.party ? state.party.map(p => {
-        let comp = new Companion(p.name, p.gender, p.raceKey, p.classKey, p.specKey, p.role);
+        const comp = new Companion(p.name, p.gender, p.raceKey, p.classKey, p.specKey, p.role);
         Object.assign(comp, p);
         return comp;
       }) : [];
-      
+
+      // Passive-Effekte aus Talenten neu registrieren
+      const { learnTalent: lt, TALENT_TREES: tt } = await import('./modules/skills.js').catch(() => ({}));
+      // Sync: passiveEffects direkt aus talents wiederherstellen
+      this.restorePassiveEffects(this.player);
+      if (this.player.party) this.player.party.forEach(c => this.restorePassiveEffects(c));
+
       this.player.resetStats();
       this.player.currentHp = state.currentHp;
       this.player.currentResource = state.currentResource;
 
-      // Direkt ins Dorf springen
-      this.header.classList.remove('hidden');
-      this.sidebar.classList.remove('hidden');
+      this.currentSlot = slotId;
+      localStorage.setItem('dungeon_last_slot', String(slotId));
+
       this.showScreen('screen-village');
       this.updateUI();
     } catch (e) {
-      console.error('Fehler beim Laden des Spielstands:', e);
-      localStorage.removeItem('dungeon_crawler_save');
+      console.error('Fehler beim Laden von Slot', slotId, e);
     }
+  }
+
+  /** Stellt passiveEffects nach dem Laden wieder her (ohne learnTalent-Seiteneffekte) */
+  restorePassiveEffects(character) {
+    character.passiveEffects = character.passiveEffects || {};
+    import('./modules/skills.js').then(({ SKILL_DATABASE }) => {
+      for (const [talentId, level] of Object.entries(character.talents || {})) {
+        if (level > 0) {
+          const skillDef = SKILL_DATABASE[talentId];
+          if (skillDef?.passiveEffect) {
+            const fn = skillDef.passiveEffect;
+            character.passiveEffects[talentId] = (c) => fn(c, c.talents[talentId] || 0);
+          }
+        }
+      }
+      character.resetStats();
+    });
+  }
+
+  // --- HAUPTMENÜ ---
+  setupMainMenu() {
+    document.getElementById('btn-continue-game').addEventListener('click', () => {
+      const lastSlot = localStorage.getItem('dungeon_last_slot');
+      if (lastSlot && localStorage.getItem(`dungeon_save_slot_${lastSlot}`)) {
+        this.loadFromSlot(parseInt(lastSlot));
+      }
+    });
+
+    document.getElementById('btn-new-game').addEventListener('click', () => {
+      this.renderSaveSlots('new');
+      document.getElementById('save-slots-overlay').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-load-game').addEventListener('click', () => {
+      this.renderSaveSlots('load');
+      document.getElementById('save-slots-overlay').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-close-save-slots').addEventListener('click', () => {
+      document.getElementById('save-slots-overlay').classList.add('hidden');
+    });
+
+    this.updateMainMenuButtons();
+  }
+
+  updateMainMenuButtons() {
+    const lastSlot = localStorage.getItem('dungeon_last_slot');
+    const btn = document.getElementById('btn-continue-game');
+    if (!btn) return;
+    const hasSave = lastSlot && localStorage.getItem(`dungeon_save_slot_${lastSlot}`);
+    btn.disabled = !hasSave;
+    btn.style.opacity = hasSave ? '1' : '0.4';
+    btn.style.cursor  = hasSave ? 'pointer' : 'not-allowed';
+  }
+
+  renderSaveSlots(mode) {
+    const title = document.getElementById('save-slots-title');
+    const list  = document.getElementById('save-slots-list');
+    title.textContent = mode === 'new' ? 'Speicherslot wählen' : 'Spielstand laden';
+
+    list.innerHTML = [1, 2, 3].map(slotId => {
+      const raw = localStorage.getItem(`dungeon_save_slot_${slotId}`);
+      let infoHtml = '<span style="color:var(--text-muted);">— Leer —</span>';
+      let isEmpty = true;
+      if (raw) {
+        try {
+          const d = JSON.parse(raw);
+          isEmpty = false;
+          infoHtml = `
+            <strong style="color:var(--text-gold);">${d.name}</strong>
+            <span style="color:var(--text-muted); margin-left:0.5rem;">
+              ${CLASSES[d.classKey]?.name || d.classKey} · Stufe ${d.level}
+            </span>`;
+        } catch(e) { /* ignore */ }
+      }
+
+      const disabled = mode === 'load' && isEmpty;
+      const warningHtml = !isEmpty && mode === 'new'
+        ? `<div style="color:#c0392b; font-size:0.78rem; margin-top:0.25rem;">⚠ Wird überschrieben</div>`
+        : '';
+
+      return `
+        <div style="
+          display:flex; align-items:center; justify-content:space-between; gap:1rem;
+          background:rgba(0,0,0,0.35); border:1px solid var(--border-color);
+          border-radius:8px; padding:0.9rem 1.2rem;
+          ${disabled ? 'opacity:0.4;' : ''}
+        ">
+          <div>
+            <div style="font-family:var(--font-title); font-size:0.95rem; color:var(--text-gold); margin-bottom:0.3rem;">
+              Slot ${slotId}
+            </div>
+            <div style="font-size:0.9rem;">${infoHtml}</div>
+            ${warningHtml}
+          </div>
+          <button
+            class="premium-btn small btn-select-slot"
+            data-slot="${slotId}"
+            data-mode="${mode}"
+            ${disabled ? 'disabled' : ''}
+            style="min-width:110px; ${disabled ? 'opacity:0.4;' : ''}">
+            ${mode === 'new' ? 'Hier starten' : 'Laden'}
+          </button>
+        </div>`;
+    }).join('');
+
+    // Click-Handler an die Slot-Buttons binden
+    list.querySelectorAll('.btn-select-slot').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const slotId = parseInt(btn.dataset.slot);
+        document.getElementById('save-slots-overlay').classList.add('hidden');
+        if (btn.dataset.mode === 'new') {
+          this.pendingNewGameSlot = slotId;
+          this.showScreen('screen-char-creation');
+        } else {
+          this.loadFromSlot(slotId);
+        }
+      });
+    });
   }
 
   // --- SCREEN SWITCHER ---
@@ -103,7 +230,7 @@ class App {
     }
     
     // Header & Sidebar steuern
-    if (screenId === 'screen-char-creation') {
+    if (screenId === 'screen-main-menu' || screenId === 'screen-char-creation') {
       this.header.classList.add('hidden');
       this.sidebar.classList.add('hidden');
     } else {
@@ -257,12 +384,36 @@ class App {
       // Assign player portrait
       this.player.image = `assets/images/portrait_${raceKey.toLowerCase()}_${classKey.toLowerCase()}_${gender}.png`;
 
+      // Speicherslot setzen (aus Slot-Auswahl oder Fallback 1)
+      this.currentSlot = this.pendingNewGameSlot || 1;
+      this.pendingNewGameSlot = null;
+
       this.showScreen('screen-village');
     });
   }
 
   // --- GLOBALE EVENT LISTENERS ---
   setupEventListeners() {
+    // Migration: alten Einzelsave in Slot 1 übernehmen
+    const legacySave = localStorage.getItem('dungeon_crawler_save');
+    if (legacySave && !localStorage.getItem('dungeon_save_slot_1')) {
+      localStorage.setItem('dungeon_save_slot_1', legacySave);
+      localStorage.setItem('dungeon_last_slot', '1');
+      localStorage.removeItem('dungeon_crawler_save');
+    }
+
+    // Hauptmenü-Button im Header
+    const mainMenuBtn = document.getElementById('btn-goto-mainmenu');
+    if (mainMenuBtn) {
+      mainMenuBtn.addEventListener('click', () => {
+        this.saveGameToLocalStorage(); // Speichern bevor zurück
+        this.player = null;
+        this.currentSlot = null;
+        this.showScreen('screen-main-menu');
+        this.updateMainMenuButtons();
+      });
+    }
+
     // Togglen des neuen Charakter-Menüs (Phase 4)
     const toggleBtn = document.getElementById('btn-toggle-character');
     toggleBtn.addEventListener('click', () => {
