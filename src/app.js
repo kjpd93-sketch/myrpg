@@ -81,9 +81,7 @@ class App {
         return comp;
       }) : [];
 
-      // Passive-Effekte aus Talenten neu registrieren
-      const { learnTalent: lt, TALENT_TREES: tt } = await import('./modules/skills.js').catch(() => ({}));
-      // Sync: passiveEffects direkt aus talents wiederherstellen
+      // Passive-Effekte aus Talenten neu registrieren (async via restorePassiveEffects)
       this.restorePassiveEffects(this.player);
       if (this.player.party) this.player.party.forEach(c => this.restorePassiveEffects(c));
 
