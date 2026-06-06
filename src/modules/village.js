@@ -37,7 +37,7 @@ export const MARKET_ITEMS = [
     buff: {
       name: 'Macht-Elixier',
       duration: 5,
-      effect: (c) => { 
+      effect: (c) => {
         c.bonusStats.strength = (c.bonusStats.strength || 0) + 5;
         c.bonusStats.intellect = (c.bonusStats.intellect || 0) + 5;
       },
@@ -45,6 +45,52 @@ export const MARKET_ITEMS = [
     },
     cost: 30,
     description: 'Erhöht Stärke und Intelligenz für 5 Runden im Kampf um 5.'
+  },
+  {
+    id: 'potion_heal_strong',
+    name: 'Starker Heiltrank',
+    type: 'consumable',
+    effectType: 'heal',
+    value: 120,
+    cost: 35,
+    description: 'Heilt den Anwender sofort um 120 Lebenspunkte. Kann im Kampf genutzt werden.'
+  },
+  {
+    id: 'potion_mana_strong',
+    name: 'Starker Manatrank',
+    type: 'consumable',
+    effectType: 'mana',
+    value: 120,
+    cost: 35,
+    description: 'Stellt sofort 120 Mana wieder her. Kann im Kampf genutzt werden.'
+  },
+  {
+    id: 'elixir_swiftness',
+    name: 'Elixier der Schnelligkeit',
+    type: 'consumable',
+    effectType: 'buff',
+    buff: {
+      name: 'Flinkheit',
+      duration: 5,
+      effect: (c) => { c.bonusCritChance = (c.bonusCritChance || 0) + 0.08; },
+      text: 'Krit-Chance um 8% erhöht.'
+    },
+    cost: 28,
+    description: 'Erhöht die Krit-Chance für 5 Runden um 8%.'
+  },
+  {
+    id: 'scroll_iron_skin',
+    name: 'Schriftrolle: Eisenhaut',
+    type: 'consumable',
+    effectType: 'buff',
+    buff: {
+      name: 'Eisenhaut',
+      duration: 4,
+      effect: (c) => { c.bonusStats.stamina = (c.bonusStats.stamina || 0) + 8; },
+      text: 'Ausdauer um 8 erhöht (mehr Lebenspunkte & Schadensreduzierung).'
+    },
+    cost: 32,
+    description: 'Erhöht Ausdauer für 4 Runden um 8 Punkte.'
   }
 ];
 
@@ -77,7 +123,7 @@ export function getBlacksmithInventory(character) {
       if (tpl.id === 'off_sword' && (character.classKey !== 'KRIEGER' || character.specKey !== 'FUROR')) {
         suitable = false;
       }
-      if ((tpl.id === 'magical_orb' || tpl.id === 'holy_relic') && (character.classKey !== 'MAGIER' && character.classKey !== 'PRIESTER')) {
+      if ((tpl.id === 'magical_orb' || tpl.id === 'holy_relic' || tpl.id === 'dark_tome') && (character.classKey !== 'MAGIER' && character.classKey !== 'PRIESTER')) {
         suitable = false;
       }
     }

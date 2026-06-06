@@ -50,9 +50,9 @@ export const QUEST_TEMPLATES = [
   {
     id: 'quest_boss_spider',
     title: 'Kopf der Spinnenkönigin',
-    description: 'Erschlage die Riesige Spinnenkönigin in den Tiefen des Dungeons und bringe ihren Kopf zurück.',
+    description: 'Erschlage die Riesige Spinnenkönigin in den Tiefen der Höhle und bringe ihren Kopf zurück.',
     targetType: 'kill_boss',
-    targetId: 'Spinnenkönigin (Boss)',
+    targetId: 'Spinnenkönigin',
     targetCount: 1,
     xpReward: 480,
     goldReward: 300,
@@ -63,11 +63,92 @@ export const QUEST_TEMPLATES = [
     title: 'Der Goblin-König',
     description: 'Besiege Grak den Goblin-König, um dem Terror ein Ende zu bereiten.',
     targetType: 'kill_boss',
-    targetId: 'Goblin-König (Boss)',
+    targetId: 'Goblin-König Grak',
     targetCount: 1,
     xpReward: 640,
     goldReward: 400,
     difficulty: 'Schwer (Boss)'
+  },
+
+  // ── Orkfestung-Quests ──────────────────────────────────────────────────────
+  {
+    id: 'quest_orks',
+    title: 'Ork-Invasoren',
+    description: 'Besiege 6 Ork-Krieger, die das Grenzgebiet terrorisieren.',
+    targetType: 'kill_monster',
+    targetId: 'Ork-Krieger',
+    targetCount: 6,
+    xpReward: 220,
+    goldReward: 110,
+    difficulty: 'Mittel'
+  },
+  {
+    id: 'quest_dunkelelf',
+    title: 'Schattenläufer',
+    description: 'Töte 4 Dunkel-Elfen, die nächtliche Überfälle auf Händler durchführen.',
+    targetType: 'kill_monster',
+    targetId: 'Dunkel-Elfe',
+    targetCount: 4,
+    xpReward: 180,
+    goldReward: 95,
+    difficulty: 'Mittel'
+  },
+  {
+    id: 'quest_orkfestung_clear',
+    title: 'Erstürmung der Orkfestung',
+    description: 'Kämpfe dich durch die Orkfestung und besiege 14 Gegner.',
+    targetType: 'kill_any',
+    targetId: 'any',
+    targetCount: 14,
+    xpReward: 380,
+    goldReward: 210,
+    difficulty: 'Schwer'
+  },
+  {
+    id: 'quest_boss_ork',
+    title: 'Der Ork-Warlord',
+    description: 'Stelle dich Gruum dem Ork-Warlord und beende seine Herrschaft.',
+    targetType: 'kill_boss',
+    targetId: 'Ork-Warlord Gruum',
+    targetCount: 1,
+    xpReward: 900,
+    goldReward: 550,
+    difficulty: 'Sehr Schwer (Boss)'
+  },
+
+  // ── Verfluchte Katakomben-Quests ───────────────────────────────────────────
+  {
+    id: 'quest_vampire',
+    title: 'Blutsauger vertreiben',
+    description: 'Besiege 5 Vampire in den Katakomben.',
+    targetType: 'kill_monster',
+    targetId: 'Vampir',
+    targetCount: 5,
+    xpReward: 260,
+    goldReward: 130,
+    difficulty: 'Schwer'
+  },
+  {
+    id: 'quest_steingolem',
+    title: 'Steinerne Wächter',
+    description: 'Zerstöre 3 Stein-Golems, die den Weg versperren.',
+    targetType: 'kill_monster',
+    targetId: 'Stein-Golem',
+    targetCount: 3,
+    xpReward: 240,
+    goldReward: 120,
+    difficulty: 'Schwer'
+  },
+  {
+    id: 'quest_boss_vampir',
+    title: 'Vampirfürst Mordecai',
+    description: 'Besiege den unsterblichen Vampirfürsten Mordecai und stecke ihm einen Pflock durchs Herz.',
+    targetType: 'kill_boss',
+    targetId: 'Vampirfürst Mordecai',
+    targetCount: 1,
+    xpReward: 1200,
+    goldReward: 750,
+    difficulty: 'Extrem (Boss)'
   }
 ];
 

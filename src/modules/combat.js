@@ -70,6 +70,80 @@ export const ENEMY_TEMPLATES = {
     ]
   },
 
+  // ─── Dungeon 2: Orkfestung ────────────────────────────────────────────────
+  ORK: {
+    name: 'Ork-Krieger',
+    image: 'assets/images/enemy_ork.png',
+    level: 3,
+    hp: 160, maxHp: 160,
+    damage: 18,
+    armor: 12,
+    skills: [
+      { name: 'Berserker-Schrei', chance: 0.20, selfBuff: true, buffMult: 1.35, effectText: 'Berserker (+35% Schaden)' },
+      { name: 'Wuchtschlag',      chance: 0.25, extraDamage: 12, text: 'schlägt mit voller Wucht zu' }
+    ],
+    xpReward: 110,
+    goldRange: [25, 45],
+    lootTable: [
+      { id: 'heavy_gloves', chance: 0.15 },
+      { id: 'war_mace',     chance: 0.10 }
+    ]
+  },
+  DUNKELELF: {
+    name: 'Dunkel-Elfe',
+    level: 3,
+    hp: 100, maxHp: 100,
+    damage: 15,
+    armor: 6,
+    skills: [
+      { name: 'Giftpfeil',    chance: 0.35, dot: 8, duration: 3, text: 'schießt einen vergifteten Pfeil' },
+      { name: 'Schattenform', chance: 0.15, selfBuff: true, buffMult: 1.20, effectText: 'Schatten (+20% Schaden)' }
+    ],
+    xpReward: 95,
+    goldRange: [20, 38],
+    lootTable: [
+      { id: 'elven_bow',  chance: 0.10 },
+      { id: 'cloth_boots', chance: 0.15 }
+    ]
+  },
+
+  // ─── Dungeon 3: Verfluchte Katakomben ────────────────────────────────────
+  STEINGOLEM: {
+    name: 'Stein-Golem',
+    level: 4,
+    hp: 240, maxHp: 240,
+    damage: 20,
+    armor: 30,
+    skills: [
+      { name: 'Erdstampfer',     chance: 0.25, extraDamage: 15, isAoe: true, text: 'erschüttert den Boden — alle spüren die Wucht' },
+      { name: 'Gesteinsrüstung', chance: 0.15, selfBuff: true, buffMult: 1.10, effectText: 'Gestein verhärtet (+10% Schaden)' }
+    ],
+    xpReward: 130,
+    goldRange: [30, 55],
+    lootTable: [
+      { id: 'plate_boots',  chance: 0.15 },
+      { id: 'tower_shield', chance: 0.08 }
+    ]
+  },
+  VAMPIR: {
+    name: 'Vampir',
+    image: 'assets/images/enemy_skeleton.png',
+    level: 4,
+    hp: 140, maxHp: 140,
+    damage: 22,
+    armor: 8,
+    skills: [
+      { name: 'Blutdurst', chance: 0.30, extraDamage: 10, lifeSteal: 0.50, text: 'beißt und saugt das Blut des Opfers' },
+      { name: 'Hypnose',   chance: 0.20, stun: true, text: 'blickt dem Ziel tief in die Augen' }
+    ],
+    xpReward: 120,
+    goldRange: [30, 50],
+    lootTable: [
+      { id: 'dark_tome',  chance: 0.10 },
+      { id: 'cloth_robe', chance: 0.12 }
+    ]
+  },
+
   // ─── Bosse ─────────────────────────────────────────────────────────────────
   BOSS_SPIDER: {
     name: 'Spinnenkönigin',
@@ -146,9 +220,112 @@ export const ENEMY_TEMPLATES = {
     xpReward: 550,
     goldRange: [180, 260],
     lootTable: [
-      { id: 'sword_2h', chance: 0.45 },
+      { id: 'sword_2h',   chance: 0.45 },
       { id: 'plate_chest', chance: 0.45 },
       { id: 'holy_relic', chance: 0.45 }
+    ]
+  },
+
+  // ─── Boss: Orkfestung ──────────────────────────────────────────────────────
+  BOSS_ORK_WARLORD: {
+    name: 'Ork-Warlord Gruum',
+    image: 'assets/images/enemy_ork.png',
+    level: 5,
+    hp: 700, maxHp: 700,
+    damage: 30,
+    armor: 22,
+    isBoss: true,
+    skills: [
+      { name: 'Warlord-Hieb', chance: 0.25, extraDamage: 20, text: 'holt mit seiner Riesenklinge weit aus' },
+      { name: 'Schlachtruf',  chance: 0.20, selfBuff: true, buffMult: 1.40, effectText: 'Kriegsbereitschaft (+40% Schaden)' }
+    ],
+    phases: [
+      {
+        threshold: 0.70,
+        triggered: false,
+        message: '⚔️ Gruum tobt! Er ruft seine Leibgarde und schmettert seinen Streitkolben auf den Boden!',
+        extraSkills: [
+          { name: 'Stampf-Angriff', chance: 0.30, extraDamage: 14, isAoe: true, text: 'erschüttert den Boden — alle Helden wanken' }
+        ],
+        damageMultiplier: 1.20
+      },
+      {
+        threshold: 0.40,
+        triggered: false,
+        message: '💥 GRUUM BLUTET — ER RAST! Seine Augen leuchten rot, seine Kraft verdoppelt sich!',
+        extraSkills: [
+          { name: 'Berserkerwut', chance: 0.45, extraDamage: 25, isAoe: true, text: 'greift in rasender Wut wild um sich' }
+        ],
+        damageMultiplier: 1.35
+      },
+      {
+        threshold: 0.15,
+        triggered: false,
+        message: '☠️ LETZTER ATEMZUG — Gruum wirft alles in einen einzigen verzweifelten Todesstoß!',
+        extraSkills: [
+          { name: 'Todesklinge', chance: 0.60, extraDamage: 40, text: 'schlägt mit allerletzter Kraft zu' }
+        ],
+        damageMultiplier: 1.50
+      }
+    ],
+    xpReward: 750,
+    goldRange: [250, 380],
+    lootTable: [
+      { id: 'battle_axe',    chance: 0.60 },
+      { id: 'heavy_chest_t2', chance: 0.50 },
+      { id: 'plate_helm_t2', chance: 0.45 }
+    ]
+  },
+
+  // ─── Boss: Verfluchte Katakomben ──────────────────────────────────────────
+  BOSS_VAMPIRFUERST: {
+    name: 'Vampirfürst Mordecai',
+    image: 'assets/images/enemy_skeleton.png',
+    level: 6,
+    hp: 850, maxHp: 850,
+    damage: 32,
+    armor: 15,
+    isBoss: true,
+    skills: [
+      { name: 'Lebensraub',       chance: 0.30, extraDamage: 15, lifeSteal: 0.60, text: 'entzieht dem Ziel die Lebensenergie mit einem Biss' },
+      { name: 'Vampirischer Blick', chance: 0.20, stun: true, text: 'lähmt das Ziel mit seinem Todesblick' }
+    ],
+    phases: [
+      {
+        threshold: 0.65,
+        triggered: false,
+        message: '🦇 Mordecai lacht höhnisch! Er verwandelt sich — ein FLEDERMAUSSCHWARM umhüllt ihn!',
+        extraSkills: [
+          { name: 'Fledermaushagel', chance: 0.35, dot: 10, duration: 3, isAoe: true, text: 'lässt einen Schwarm Fledermäuse auf die Gruppe los' }
+        ],
+        damageMultiplier: 1.25
+      },
+      {
+        threshold: 0.35,
+        triggered: false,
+        message: '💉 MORDECAI RAST — Er saugt Lebensenergie direkt aus der Luft selbst!',
+        extraSkills: [
+          { name: 'Blutbad', chance: 0.45, extraDamage: 22, lifeSteal: 0.80, isAoe: true, text: 'trinkt gierig von allen Lebewesen gleichzeitig' }
+        ],
+        damageMultiplier: 1.40
+      },
+      {
+        threshold: 0.10,
+        triggered: false,
+        message: '☠️ UNSTERBLICHE RASEREI — Mordecai regeneriert sich mit erschreckender Geschwindigkeit!',
+        extraSkills: [
+          { name: 'Blutopfer', chance: 0.50, extraDamage: 30, lifeSteal: 1.00, text: 'opfert sein eigenes Blut für maximale Kraft' }
+        ],
+        damageMultiplier: 1.55,
+        selfRegen: 30
+      }
+    ],
+    xpReward: 950,
+    goldRange: [320, 500],
+    lootTable: [
+      { id: 'arcane_staff',      chance: 0.55 },
+      { id: 'cloth_robe_arcane', chance: 0.55 },
+      { id: 'dark_tome',         chance: 0.50 }
     ]
   }
 };
@@ -581,7 +758,7 @@ export class Combat {
       actionText = `${enemy.name} wirkt '${usedSkill.name}': ${usedSkill.text}. `;
       if (usedSkill.extraDamage) dmg += usedSkill.extraDamage;
       if (usedSkill.selfBuff) {
-        enemy.damageModifier = 1.30;
+        enemy.damageModifier = usedSkill.buffMult || 1.30;
         actionText += `(${usedSkill.effectText || ''}) `;
       }
     } else {
@@ -654,6 +831,15 @@ export class Combat {
     if (finalDmg > 0) {
       hero.currentHp = Math.max(0, hero.currentHp - finalDmg);
 
+      // Life-Steal (Vampir / Boss)
+      if (skill?.lifeSteal) {
+        const stolen = Math.round(finalDmg * skill.lifeSteal);
+        if (stolen > 0) {
+          enemy.currentHp = Math.min(enemy.maxHp, enemy.currentHp + stolen);
+          this.addLog(`  🩸 ${enemy.name} saugt ${stolen} LP zurück.`);
+        }
+      }
+
       // Wut-Generierung für Krieger
       if (hero.classKey === 'KRIEGER') {
         const rage = Math.min(50, Math.floor(finalDmg * 0.4));
@@ -684,6 +870,11 @@ export class Combat {
           if (phase.damageMultiplier) {
             enemy.damage = Math.round(enemy.damage * phase.damageMultiplier);
             this.addLog(`  ⚔️  ${enemy.name} Schaden erhöht auf ${enemy.damage}!`);
+          }
+          if (phase.selfRegen) {
+            enemy.buffs = enemy.buffs || [];
+            enemy.buffs.push({ name: 'Unsterbliche Regeneration', duration: 20, hot: phase.selfRegen });
+            this.addLog(`  💊 ${enemy.name} beginnt zu regenerieren! (+${phase.selfRegen} LP/Runde)`);
           }
         }
       });
@@ -731,8 +922,10 @@ export class Combat {
     this.lootEarned = [];
     this.enemies.forEach(e => {
       if (e.isBoss) {
-        if (e.name.includes('Spinnenkönigin')) this.lootEarned.push({ name: 'Spinnenkönigin Kopf', isQuestItem: true, id: 'Spinnenkönigin (Boss)' });
-        else if (e.name.includes('Goblin-König')) this.lootEarned.push({ name: 'Goblin-König Kopf', isQuestItem: true, id: 'Goblin-König (Boss)' });
+        if (e.name.includes('Spinnenkönigin')) this.lootEarned.push({ name: 'Kopf der Spinnenkönigin', isQuestItem: true, id: e.name });
+        else if (e.name.includes('Goblin-König')) this.lootEarned.push({ name: 'Kopf des Goblin-Königs', isQuestItem: true, id: e.name });
+        else if (e.name.includes('Gruum')) this.lootEarned.push({ name: 'Kopf des Ork-Warlords', isQuestItem: true, id: e.name });
+        else if (e.name.includes('Mordecai')) this.lootEarned.push({ name: 'Reißzahn des Vampirfürsten', isQuestItem: true, id: e.name });
       }
       (e.lootTable || []).forEach(entry => {
         if (Math.random() < entry.chance) {

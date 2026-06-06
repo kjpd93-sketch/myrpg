@@ -39,7 +39,23 @@ export const ITEM_TEMPLATES = {
   steel_shield: { id: 'steel_shield', name: 'Stahlschild des Kreuzfahrers', slot: 'offHand', armorType: 'none', armor: 35, stats: { strength: 2, stamina: 6 }, cost: 80 },
   off_sword: { id: 'off_sword', name: 'Kurzschwert für die Schildhand', slot: 'offHand', armorType: 'none', damage: 8, stats: { strength: 1, agility: 1 }, cost: 45 },
   magical_orb: { id: 'magical_orb', name: 'Kristallkugel des Fokus', slot: 'offHand', armorType: 'none', stats: { intellect: 3 }, spellPower: 12, cost: 40 },
-  holy_relic: { id: 'holy_relic', name: 'Heiliges Buch des Gebets', slot: 'offHand', armorType: 'none', stats: { intellect: 2 }, spellPower: 8, healPower: 15, cost: 40 }
+  holy_relic: { id: 'holy_relic', name: 'Heiliges Buch des Gebets', slot: 'offHand', armorType: 'none', stats: { intellect: 2 }, spellPower: 8, healPower: 15, cost: 40 },
+
+  // ── TIER 2 WAFFEN ───────────────────────────────────────────────────────────
+  battle_axe:    { id: 'battle_axe',    name: 'Kampfaxt des Ork-Brechers',       slot: 'mainHand', armorType: 'none', damage: 20, stats: { strength: 4, stamina: 2 }, cost: 85 },
+  war_mace:      { id: 'war_mace',      name: 'Kriegskeule des Templers',         slot: 'mainHand', armorType: 'none', damage: 16, stats: { strength: 3, stamina: 3 }, cost: 75 },
+  elven_bow:     { id: 'elven_bow',     name: 'Elfenbogen des Waldläufers',       slot: 'mainHand', armorType: 'none', damage: 15, stats: { agility: 5, intellect: 1 }, cost: 80 },
+  arcane_staff:  { id: 'arcane_staff',  name: 'Arkaner Stab des Weisen',          slot: 'mainHand', armorType: 'none', damage: 7,  stats: { intellect: 7 }, spellPower: 22, cost: 110 },
+  dark_tome:     { id: 'dark_tome',     name: 'Schattentom des Nekromanten',      slot: 'offHand',  armorType: 'none', stats: { intellect: 5 }, spellPower: 20, cost: 90 },
+  tower_shield:  { id: 'tower_shield',  name: 'Turmschild des Unerschütterlichen',slot: 'offHand',  armorType: 'none', armor: 50, stats: { stamina: 8, strength: 2 }, cost: 130 },
+
+  // ── TIER 2 RÜSTUNGEN ────────────────────────────────────────────────────────
+  plate_helm_t2:      { id: 'plate_helm_t2',      name: 'Kronenhelm des Kriegsherrn',       slot: 'head',  armorType: 'plate', armor: 22, stats: { strength: 5, stamina: 6 }, cost: 110 },
+  heavy_chest_t2:     { id: 'heavy_chest_t2',     name: 'Kettenhemd des Kriegers',           slot: 'chest', armorType: 'heavy', armor: 28, stats: { strength: 5, stamina: 8 }, cost: 135 },
+  cloth_robe_arcane:  { id: 'cloth_robe_arcane',  name: 'Arkane Robe des Hohen Magiers',    slot: 'chest', armorType: 'cloth', armor: 12, stats: { intellect: 8, stamina: 3 }, cost: 130 },
+  sorcerer_gloves:    { id: 'sorcerer_gloves',    name: 'Zaubererhandschuhe des Fokus',     slot: 'hands', armorType: 'cloth', armor: 3,  stats: { intellect: 4, agility: 2 }, spellPower: 6, cost: 60 },
+  heavy_trousers_t2:  { id: 'heavy_trousers_t2',  name: 'Kettenbeinhosen des Veteranen',    slot: 'legs',  armorType: 'heavy', armor: 20, stats: { strength: 4, stamina: 6 }, cost: 105 },
+  plate_boots_t2:     { id: 'plate_boots_t2',     name: 'Platinstiefel des Hüters',         slot: 'feet',  armorType: 'plate', armor: 16, stats: { strength: 4, stamina: 5 }, cost: 90 }
 };
 
 // Generiert ein neues Item-Objekt aus dem Template (erlaubt Instanziierung für Upgrades)
@@ -88,7 +104,7 @@ export function canEquipItem(character, item) {
       }
     }
     // Relikte und Fokusse nur für Magier und Priester
-    if (item.id === 'magical_orb' || item.id === 'holy_relic') {
+    if (item.id === 'magical_orb' || item.id === 'holy_relic' || item.id === 'dark_tome') {
       if (character.classKey !== 'MAGIER' && character.classKey !== 'PRIESTER') {
         return { allowed: false, reason: 'Relikte und Zauberfokusse können nur von Magiern und Priestern getragen werden!' };
       }

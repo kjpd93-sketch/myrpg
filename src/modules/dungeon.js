@@ -22,6 +22,24 @@ export const DUNGEONS = {
     monsterPool: ['GOBLIN', 'SKELETT'],
     description: 'Eine verbarrikadierte Festung aus Holz und Stein. Grak der Goblin-König herrscht hier.',
     minLevel: 2
+  },
+  ORKFESTUNG: {
+    id: 'ORKFESTUNG',
+    name: 'Die Orkfestung',
+    gridSize: 5, // 5x5 Map
+    bossKey: 'BOSS_ORK_WARLORD',
+    monsterPool: ['ORK', 'DUNKELELF'],
+    description: 'Eine massive Festung aus schwarzem Stein. Ork-Warlord Gruum regiert mit eiserner Faust.',
+    minLevel: 3
+  },
+  VERFLUCHTE_KATAKOMBEN: {
+    id: 'VERFLUCHTE_KATAKOMBEN',
+    name: 'Die Verfluchten Katakomben',
+    gridSize: 6, // 6x6 Map
+    bossKey: 'BOSS_VAMPIRFUERST',
+    monsterPool: ['VAMPIR', 'STEINGOLEM'],
+    description: 'Uralte Katakomben voller Dunkelheit und Verderben. Vampirfürst Mordecai lauert in den Tiefen.',
+    minLevel: 5
   }
 };
 
