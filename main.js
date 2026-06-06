@@ -18,6 +18,13 @@ function createWindow() {
 
   win.loadFile('index.html');
 
+  // Fenster nach dem Laden sofort fokussieren — behebt Electron-Bug bei dem
+  // der erste Klick auf ein Input-Feld den Window-Fokus "verbraucht" statt
+  // das Feld zu aktivieren.
+  win.webContents.on('did-finish-load', () => {
+    win.focus();
+  });
+
   // Open DevTools if running in development (optional, can be opened via Ctrl+Shift+I)
   // win.webContents.openDevTools();
 }
