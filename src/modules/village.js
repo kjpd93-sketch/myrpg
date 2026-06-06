@@ -37,9 +37,11 @@ export const MARKET_ITEMS = [
     buff: {
       name: 'Macht-Elixier',
       duration: 5,
+      // stats.strength / stats.intellect werden direkt erhöht — resetStats läuft VOR
+      // diesem Effekt, daher bleibt der Bonus für den gesamten Zug erhalten.
       effect: (c) => {
-        c.bonusStats.strength = (c.bonusStats.strength || 0) + 5;
-        c.bonusStats.intellect = (c.bonusStats.intellect || 0) + 5;
+        c.stats.strength  = (c.stats.strength  || 0) + 5;
+        c.stats.intellect = (c.stats.intellect || 0) + 5;
       },
       text: 'Stärke & Intelligenz um 5 erhöht.'
     },
@@ -86,11 +88,22 @@ export const MARKET_ITEMS = [
     buff: {
       name: 'Eisenhaut',
       duration: 4,
-      effect: (c) => { c.bonusStats.stamina = (c.bonusStats.stamina || 0) + 8; },
-      text: 'Ausdauer um 8 erhöht (mehr Lebenspunkte & Schadensreduzierung).'
+      // Ausdauer direkt erhöhen — mehr maxHp und bessere Schadensreduktion durch
+      // höheres stamina * 11. resetStats läuft VOR diesem Effekt (korrekte Reihenfolge).
+      effect: (c) => {
+        c.stats.stamina = (c.stats.stamina || 0) + 8;
+        // maxHp aktualisieren damit der Bonus auch sichtbar ist
+        const newMaxHp = Math.round(c.stats.stamina * 11);
+        if (newMaxHp > c.maxHp) {
+          const diff = newMaxHp - c.maxHp;
+          c.maxHp = newMaxHp;
+          c.currentHp = Math.min(c.maxHp, c.currentHp + diff);
+        }
+      },
+      text: 'Ausdauer um 8 erhöht (+88 max. LP, mehr Schadensreduktion).'
     },
     cost: 32,
-    description: 'Erhöht Ausdauer für 4 Runden um 8 Punkte.'
+    description: 'Erhöht Ausdauer für 4 Runden um 8. Das gibt ~+88 max. Lebenspunkte.'
   }
 ];
 

@@ -483,6 +483,11 @@ export class Combat {
   // ─── Effekte ticken ─────────────────────────────────────────────────────────
 
   tickEffects(target, isHeroSide) {
+    // 1. Zuerst resetStats — setzt alle Stats auf Basis + Ausrüstung zurück
+    //    (bonusCritChance, bonusBlockChance, damageTakenMultiplier werden dabei genullt)
+    if (isHeroSide && target.resetStats) target.resetStats();
+
+    // 2. DANN Buff-Effekte anwenden — so bleiben ihre Werte für den Zug erhalten
     if (target.buffs?.length) {
       target.buffs.forEach(buff => {
         if (buff.effect) buff.effect(target);
@@ -495,6 +500,7 @@ export class Combat {
       target.buffs = target.buffs.filter(b => b.duration > 0);
     }
 
+    // 3. Debuffs ticken
     if (target.debuffs?.length) {
       target.debuffs.forEach(debuff => {
         if (debuff.effect) debuff.effect(target);
@@ -514,10 +520,6 @@ export class Combat {
       });
       target.debuffs = target.debuffs.filter(d => d.duration > 0);
     }
-
-    // Buff-abhängige bonusCritChance und bonusBlockChance werden durch buff.effect gesetzt;
-    // zwischen Runden reset (next tick setzt sie neu)
-    if (isHeroSide && target.resetStats) target.resetStats();
   }
 
   // ─── Treffer-/Crit-/Dodge-/Block-System ─────────────────────────────────────

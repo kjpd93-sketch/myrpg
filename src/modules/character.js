@@ -261,13 +261,15 @@ export class Character {
     return Math.round(this.stats.strength * 0.3 + this.equipment.offHand.armor * 0.15);
   }
 
-  /** Rüstungswert gesamt */
+  /** Rüstungswert gesamt (inkl. Buff-Boni aus bonusStats.armor) */
   getArmor() {
     let totalArmor = 0;
     for (const slot in this.equipment) {
       if (this.equipment[slot]?.armor) totalArmor += this.equipment[slot].armor;
     }
     totalArmor += Math.floor(this.stats.agility * 0.2);
+    // Buff-Boni (z.B. Schildschlag) die über bonusStats.armor gesetzt werden
+    if (this.bonusStats?.armor) totalArmor += this.bonusStats.armor;
 
     const spec = CLASSES[this.classKey].specs[this.specKey];
     if (spec.specialStats.armorBonus) totalArmor = Math.round(totalArmor * (1 + spec.specialStats.armorBonus));
