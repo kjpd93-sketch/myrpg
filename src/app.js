@@ -461,6 +461,16 @@ class App {
     document.getElementById('menu-stat-damage').innerText = this.player.getPhysicalDamage();
     document.getElementById('menu-stat-spellpower').innerText = this.player.getSpellPower();
 
+    // Sekundärwerte
+    const critEl      = document.getElementById('menu-stat-crit');
+    const spellCritEl = document.getElementById('menu-stat-spellcrit');
+    const dodgeEl     = document.getElementById('menu-stat-dodge');
+    const blockEl     = document.getElementById('menu-stat-block');
+    if (critEl)      critEl.innerText      = `${Math.round(this.player.getCritChance()      * 100)}%`;
+    if (spellCritEl) spellCritEl.innerText = `${Math.round(this.player.getSpellCritChance() * 100)}%`;
+    if (dodgeEl)     dodgeEl.innerText     = `${Math.round(this.player.getDodgeChance()     * 100)}%`;
+    if (blockEl)     blockEl.innerText     = `${Math.round(this.player.getBlockChance()     * 100)}%`;
+
     // Equipment Slots im Modal
     const previewBox = document.getElementById('item-hover-preview');
     const previewName = document.getElementById('preview-name');
@@ -1147,9 +1157,38 @@ class App {
     }
   }
 
+  // ─── Kampflog Farbkodierung ─────────────────────────────────────────────────
+  formatLogLine(text) {
+    if (!text?.trim()) return '';
+    if (text.includes('⚠️') || (text.includes('!') && text.includes('💀')) || text.includes('RAST') || text.includes('RASS'))
+      return `<div class="log-boss-phase">${text}</div>`;
+    if (text.startsWith('🏆') || text.startsWith('💀 Niederlage'))
+      return `<div class="log-result">${text}</div>`;
+    if (text.startsWith('─') || text.startsWith('---'))
+      return `<div class="log-round">${text}</div>`;
+    if (text.startsWith('🎲') || text.startsWith('⭐') || text.startsWith('Kampf gegen'))
+      return `<div class="log-system">${text}</div>`;
+    if (text.includes('💥 KRIT'))
+      return `<div class="log-crit">${text}</div>`;
+    if (text.includes('verfehlt') || text.includes('weicht aus'))
+      return `<div class="log-miss">${text}</div>`;
+    if (text.includes('heilt') || text.includes('regeneriert') || text.includes('HoT') || text.includes('Heilung'))
+      return `<div class="log-heal">${text}</div>`;
+    if (text.startsWith('[Comp]'))
+      return `<div class="log-companion">${text}</div>`;
+    if (text.startsWith('[Buff]') || text.startsWith('[Debuff]') || text.startsWith('[DoT]') || text.startsWith('[Schild]'))
+      return `<div class="log-effect">${text}</div>`;
+    if (text.startsWith('  →') || text.includes('Schaden ('))
+      return `<div class="log-damage">${text}</div>`;
+    return `<div class="log-action">${text}</div>`;
+  }
+
   // --- 9. COMBAT SYSTEM RENDER & HANDLER ---
   renderCombat() {
     if (!this.combat) return;
+
+    // Wer ist gerade am Zug?
+    const currentActor = this.combat.turnQueue[this.combat.currentTurnIndex]?.entity;
 
     // INITIATIVE TRACK
     const initTrack = document.getElementById('combat-initiative-track');
@@ -1183,25 +1222,44 @@ class App {
           return `<div class="combat-unit enemy-unit" style="opacity: 0.3;"><div class="unit-info"><h3>${enemy.name} (Tot)</h3></div></div>`;
         }
         const enemyHpPct = (enemy.currentHp / enemy.maxHp) * 100;
-        const buffs = enemy.buffs.map(b => `<span class="effect-badge" style="color:#28a745">${b.name} (${b.duration}r)</span>`).join('');
+        const buffs   = enemy.buffs.map(b   => `<span class="effect-badge" style="color:#28a745">${b.name} (${b.duration}r)</span>`).join('');
         const debuffs = enemy.debuffs.map(d => `<span class="effect-badge" style="color:var(--text-red)">${d.name} (${d.duration}r)</span>`).join('');
-        
-        const isSelected = this.selectedTargetId === enemy.id;
-        const enemyImg = enemy.image ? `<img src="${enemy.image}" class="avatar-img" alt="${enemy.name}">` : `👹`;
+
+        const isSelected    = this.selectedTargetId === enemy.id;
+        const isCurrentTurn = currentActor === enemy;
+        const enemyImg      = enemy.image ? `<img src="${enemy.image}" class="avatar-img" alt="${enemy.name}">` : `👹`;
+
+        // Boss-Phasen-Marker auf dem HP-Balken
+        let phaseMarkers = '';
+        if (enemy.isBoss && enemy.phases) {
+          phaseMarkers = enemy.phases.map(p =>
+            `<div class="phase-marker" style="left: ${p.threshold * 100}%" title="Phase bei ${Math.round(p.threshold*100)}% HP"></div>`
+          ).join('');
+        }
+
+        // Phase-Label
+        let phaseLabel = '';
+        if (enemy.isBoss && enemy.phases) {
+          const triggeredCount = enemy.phases.filter(p => p.triggered).length;
+          if (triggeredCount > 0) {
+            phaseLabel = `<span class="effect-badge" style="color:hsl(15,90%,65%); border-color:hsl(15,90%,50%);">Phase ${triggeredCount + 1}</span>`;
+          }
+        }
 
         return `
-          <div class="combat-unit enemy-unit ${isSelected ? 'selected-target' : ''}" style="cursor: pointer;" data-id="${enemy.id}">
+          <div class="combat-unit enemy-unit ${isSelected ? 'selected-target' : ''} ${isCurrentTurn ? 'is-my-turn' : ''}" style="cursor:pointer;" data-id="${enemy.id}">
             <div class="avatar-box enemy-avatar">${enemyImg}</div>
             <div class="unit-info">
-              <h3 id="combat-enemy-name">${enemy.name}</h3>
-              <span class="level-badge">Lvl ${enemy.level}</span>
+              <h3>${enemy.name}${enemy.isBoss ? ' 👺' : ''}</h3>
+              <span class="level-badge">Lvl ${enemy.level}${enemy.isBoss ? ' · BOSS' : ''}</span>
               <div class="stat-bar-wrapper">
-                <div class="bar-container hp">
-                  <div class="bar" style="width: ${enemyHpPct}%"></div>
+                <div class="bar-container hp ${enemy.isBoss ? 'boss-bar' : ''}">
+                  <div class="bar" style="width: ${enemyHpPct}%; background: ${enemy.isBoss ? 'linear-gradient(90deg, hsl(15,80%,40%), hsl(0,80%,50%))' : ''}"></div>
+                  ${phaseMarkers}
                   <span class="bar-text">${enemy.currentHp} / ${enemy.maxHp}</span>
                 </div>
               </div>
-              <div class="effects-list">${debuffs}${buffs}</div>
+              <div class="effects-list">${phaseLabel}${debuffs}${buffs}</div>
             </div>
           </div>
         `;
@@ -1225,7 +1283,8 @@ class App {
           return `<div class="combat-unit player-unit" style="opacity: 0.3;"><div class="unit-info"><h3>${hero.name} (Tot)</h3></div></div>`;
         }
         
-        const isPlayer = hero === this.player;
+        const isPlayer      = hero === this.player;
+        const isCurrentTurnHero = currentActor === hero;
         const hpPct = (hero.currentHp / hero.maxHp) * 100;
         
         let pAv = '🧙‍♂️';
@@ -1260,7 +1319,7 @@ class App {
         }
 
         return `
-          <div class="combat-unit player-unit ${isPlayer ? 'active-turn' : ''} ${isSelectedHero ? 'selected-target' : ''}" style="cursor: pointer;" data-id="${hero.name}">
+          <div class="combat-unit player-unit ${isCurrentTurnHero ? 'is-my-turn' : ''} ${isSelectedHero ? 'selected-target' : ''}" style="cursor: pointer;" data-id="${hero.name}">
             <div class="avatar-box player-avatar">${pAv}</div>
             <div class="unit-info">
               <h3>${hero.name}</h3>
@@ -1288,10 +1347,10 @@ class App {
       });
     }
 
-    // COMBAT LOG
+    // COMBAT LOG — farbkodiert
     const logBody = document.getElementById('combat-log-body');
-    logBody.innerHTML = this.combat.logs.map(log => `<div>${log}</div>`).join('');
-    logBody.scrollTop = logBody.scrollHeight; // Auto-scroll
+    logBody.innerHTML = this.combat.logs.map(log => this.formatLogLine(log)).join('');
+    logBody.scrollTop = logBody.scrollHeight;
 
     // COMBAT SKILLS (Tasten rendern)
     const skillsGrid = document.getElementById('combat-skills-grid');
