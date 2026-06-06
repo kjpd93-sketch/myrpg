@@ -179,7 +179,8 @@ export const SKILL_DATABASE = {
       caster.buffs.push({
         name: 'Tollkühnheit',
         duration: 3,
-        effect: (c) => { c.bonusCritChance = 0.40 + (talentLevel - 1) * 0.10; },
+        // additiv — überschreibt NICHT den Bonus aus Passiv-Talenten (Blutfieber etc.)
+        effect: (c) => { c.bonusCritChance = (c.bonusCritChance || 0) + 0.40 + (talentLevel - 1) * 0.10; },
         text: 'Kritische Trefferchance erhöht.'
       });
 
@@ -280,8 +281,9 @@ export const SKILL_DATABASE = {
       caster.buffs.push({
         name: 'Heiliger Schild',
         duration: 3,
-        effect: (c) => { 
-          c.bonusBlockChance = 0.25 + (talentLevel - 1) * 0.05;
+        effect: (c) => {
+          // additiv — überschreibt NICHT den Bonus aus Heilige Pflicht [Passiv]
+          c.bonusBlockChance = (c.bonusBlockChance || 0) + 0.25 + (talentLevel - 1) * 0.05;
           c.blockRetaliation = Math.round(c.getSpellPower() * 0.3);
         },
         text: 'Blockchance erhöht, Vergeltungsschaden aktiv.'
@@ -305,7 +307,7 @@ export const SKILL_DATABASE = {
       if (caster.currentResource < 15) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 15;
       const mult = 1 + (talentLevel - 1) * 0.3;
-      const heal = Math.round((20 + caster.getSpellPower() * 0.8) * mult);
+      const heal = Math.round((20 + caster.getSpellPower() * 0.8) * mult * (caster.getHealPower?.() || 1));
       caster.currentHp = Math.min(caster.maxHp, caster.currentHp + heal);
       return {
         text: `${caster.name} wirkt Lichtblitz und heilt sich um ${heal} Leben.`,
@@ -376,9 +378,9 @@ export const SKILL_DATABASE = {
       if (caster.currentResource < 30) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 30;
       const mult = 1 + (talentLevel - 1) * 0.3;
-      const heal = Math.round((35 + caster.getSpellPower() * 1.2) * mult);
+      const heal = Math.round((35 + caster.getSpellPower() * 1.2) * mult * (caster.getHealPower?.() || 1));
       caster.currentHp = Math.min(caster.maxHp, caster.currentHp + heal);
-      
+
       // Schild-Effekt
       caster.shield = (caster.shield || 0) + Math.round(heal * 0.3);
 
@@ -733,7 +735,7 @@ export const SKILL_DATABASE = {
       if (caster.currentResource < 20) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 20;
       const mult = 1 + (talentLevel - 1) * 0.35;
-      const heal = Math.round((30 + caster.getSpellPower() * 1.4) * mult);
+      const heal = Math.round((30 + caster.getSpellPower() * 1.4) * mult * (caster.getHealPower?.() || 1));
       caster.currentHp = Math.min(caster.maxHp, caster.currentHp + heal);
       return {
         text: `${caster.name} wirkt Blitzheilung und regeneriert ${heal} Leben.`,
@@ -811,6 +813,16 @@ export const SKILL_DATABASE = {
       return { text: `${caster.name} entfesselt den Klingensturm: ${dmg} physischer Schaden!`, damage: dmg, healing: 0, isAoe: true };
     }
   },
+  // ─── KRIEGER WAFFEN: Passiv ────────────────────────────────────────────────
+  KRIEGER_WEAPON_MASTERY: {
+    id: 'KRIEGER_WEAPON_MASTERY',
+    name: 'Waffenmeisterschaft',
+    type: 'passive',
+    description: '[PASSIV] +8% physischer Gesamtschaden pro Stufe.',
+    execute: () => ({ text: '[Passiv] Waffenmeisterschaft ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.physDmgMultiplier = (c.physDmgMultiplier || 1.0) + 0.08 * level; }
+  },
+
   KRIEGER_AVATAR: {
     id: 'KRIEGER_AVATAR',
     name: 'Avatar des Kriegers',
@@ -1201,8 +1213,7 @@ export const SKILL_DATABASE = {
       if (caster.currentResource < 30) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 30;
       const mult = 1 + (talentLevel - 1) * 0.30;
-      const spec = CLASSES[caster.classKey]?.specs[caster.specKey];
-      const absBonus = spec?.specialStats?.absorptionBonus || 0;
+      const absBonus = caster.getAbsorptionBonus?.() || 0;
       const shieldVal = Math.round((35 + caster.getSpellPower() * 1.8) * mult * (1 + absBonus));
       caster.shield = (caster.shield || 0) + shieldVal;
       return { text: `${caster.name} errichtet Göttliche Ägide: ${shieldVal} Schaden absorbiert.`, damage: 0, healing: 0 };
@@ -1225,8 +1236,7 @@ export const SKILL_DATABASE = {
       if (caster.currentResource < 70) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 70;
       const mult = 1 + (talentLevel - 1) * 0.20;
-      const spec = CLASSES[caster.classKey]?.specs[caster.specKey];
-      const absBonus = spec?.specialStats?.absorptionBonus || 0;
+      const absBonus = caster.getAbsorptionBonus?.() || 0;
       const allHeroes = [caster, ...(caster.party || [])];
       let totalShield = 0;
       allHeroes.forEach(h => {
@@ -1247,7 +1257,8 @@ export const SKILL_DATABASE = {
     execute: () => ({ text: '[Passiv] Schattenform ist dauerhaft aktiv.', damage: 0, healing: 0 }),
     passiveEffect: (c, level) => {
       c.bonusCritChance = (c.bonusCritChance || 0) + 0.08 * level;
-      c.physDmgMultiplier = (c.physDmgMultiplier || 1.0) + 0.10 * level;
+      // Priester greift mit Zaubern an → SpellPower-Bonus statt physDmgMultiplier
+      c.bonusStats.spellPower = (c.bonusStats.spellPower || 0) + Math.round(c.stats.intellect * 0.10 * level);
     }
   },
   PRIESTER_VOID_ERUPTION: {
@@ -1308,7 +1319,7 @@ export const SKILL_DATABASE = {
       if (caster.currentResource < 30) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 30;
       const mult = 1 + (talentLevel - 1) * 0.3;
-      const heal = Math.round((40 + caster.getSpellPower() * 1.5) * mult);
+      const heal = Math.round((40 + caster.getSpellPower() * 1.5) * mult * (caster.getHealPower?.() || 1));
       caster.currentHp = Math.min(caster.maxHp, caster.currentHp + heal);
 
       caster.buffs = caster.buffs || [];

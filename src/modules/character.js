@@ -251,17 +251,25 @@ export class Character {
     return dmg;
   }
 
-  /** Zaubermacht: Intelligenz × 0.70 + Item-Boni */
+  /** Zaubermacht: Intelligenz × 0.70 + Item-Boni + Passiv-Boni (bonusStats.spellPower) */
   getSpellPower() {
     let itemBonus = 0;
     if (this.equipment.offHand?.spellPower) itemBonus += this.equipment.offHand.spellPower;
     if (this.equipment.mainHand?.spellPower) itemBonus += this.equipment.mainHand.spellPower;
+    // Passiv-Talente (z.B. Arkane Macht, Schattenform) können bonusStats.spellPower setzen
+    itemBonus += (this.bonusStats?.spellPower || 0);
 
     let specBonus = 1.0;
     const spec = CLASSES[this.classKey].specs[this.specKey];
     if (spec.specialStats.spellPower) specBonus += spec.specialStats.spellPower;
 
     return Math.round((this.stats.intellect * 0.70 + itemBonus) * specBonus);
+  }
+
+  /** Absorptionsbonus der Spezialisierung (für DISZIPLIN-Priester-Schilde) */
+  getAbsorptionBonus() {
+    const spec = CLASSES[this.classKey]?.specs[this.specKey];
+    return spec?.specialStats?.absorptionBonus || 0;
   }
 
   /** Krit-Chance (physisch): 5% Base + 0.1% pro Agility-Punkt + Spec-Bonus */
