@@ -54,7 +54,14 @@ class App {
       completedQuests: this.player.completedQuests || [],
       activeQuests: this.player.activeQuests || [],
       currentHp: this.player.currentHp,
-      currentResource: this.player.currentResource
+      currentResource: this.player.currentResource,
+      party: (this.player.party || []).map(p => ({
+        name: p.name, gender: p.gender, raceKey: p.raceKey,
+        classKey: p.classKey, specKey: p.specKey, role: p.role,
+        level: p.level, equipment: p.equipment, talents: p.talents || {},
+        currentHp: p.currentHp, currentResource: p.currentResource,
+        image: p.image || null
+      }))
     };
     localStorage.setItem(`dungeon_save_slot_${this.currentSlot}`, JSON.stringify(saveState));
     localStorage.setItem('dungeon_last_slot', String(this.currentSlot));
