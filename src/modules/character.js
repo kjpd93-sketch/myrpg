@@ -2,6 +2,8 @@
  * Character creation and management module
  */
 
+import { getActiveSetBonuses, ITEM_TEMPLATES } from './items.js';
+
 export const RACES = {
   MENSCH: {
     name: 'Mensch',
@@ -32,8 +34,8 @@ export const CLASSES = {
     resourceType: 'WUT',
     baseStats: { strength: 12, agility: 7, intellect: 2, stamina: 14 },
     specs: {
-      TANK: {
-        name: 'Tank (Schutz)',
+      SCHUTZ: {
+        name: 'Schutz (Tank)',
         description: 'Fokus auf Verteidigung, Schildnutzung und Schadensreduktion.',
         specialStats: { blockChance: 0.12, armorBonus: 0.15 }
       },
@@ -55,8 +57,8 @@ export const CLASSES = {
     resourceType: 'MANA',
     baseStats: { strength: 9, agility: 5, intellect: 8, stamina: 11 },
     specs: {
-      TANK: {
-        name: 'Tank (Schutz)',
+      SCHUTZ: {
+        name: 'Schutz (Tank)',
         description: 'Kombiniert schwere Rüstung und heilige Magie zur Verteidigung.',
         specialStats: { blockChance: 0.10, armorBonus: 0.10 }
       },
@@ -121,17 +123,18 @@ export const CLASSES = {
 };
 
 export class Character {
-  constructor(name, gender, raceKey, classKey, specKey) {
+  constructor(name, gender, raceKey, classKey, specKey = null) {
     this.name = name;
     this.gender = gender;
     this.raceKey = raceKey;
     this.classKey = classKey;
-    this.specKey = specKey;
+    // specKey: dynamisch bestimmt durch Talentbaum mit meisten Punkten
+    this.specKey = specKey || Object.keys(CLASSES[classKey].specs)[0];
 
     this.level = 1;
     this.xp = 0;
     this.gold = 100;
-    this.skillPoints = 0;
+    this.skillPoints = 1; // Starttalentpunkt: jede Klasse wählt ihren ersten Skill auf Stufe 1
     this.party = [];
 
     this.equipment = {
@@ -175,6 +178,7 @@ export class Character {
     this.stats = { ...levelStats };
     this.bonusStats = { strength: 0, agility: 0, intellect: 0, stamina: 0, armor: 0, damage: 0, spellPower: 0, healPower: 0 };
     this.bonusCritChance = 0;
+    this.bonusSpellCrit = 0;
     this.bonusBlockChance = 0;
     this.damageTakenMultiplier = 1.0;
     this.physDmgMultiplier = 1.0;
@@ -193,6 +197,22 @@ export class Character {
           }
         }
       }
+    }
+
+    // 3a-Unique. Passive Effekte legendärer Items anwenden (itemEffect).
+    // WICHTIG: Effekt aus dem Template per id holen — Funktionen überleben kein
+    // JSON-Speichern, daher nie von der Item-Instanz lesen.
+    for (const slot in this.equipment) {
+      const item = this.equipment[slot];
+      if (!item) continue;
+      const tpl = ITEM_TEMPLATES[item.id];
+      if (tpl && typeof tpl.itemEffect === 'function') tpl.itemEffect(this);
+    }
+
+    // 3a-Set. Ausrüstungs-Set-Boni anwenden (NACH Einzelteilen)
+    this.activeSetBonuses = getActiveSetBonuses(this);
+    for (const entry of this.activeSetBonuses) {
+      if (entry.bonus && typeof entry.bonus.apply === 'function') entry.bonus.apply(this);
     }
 
     // 3b. Passive Talenteffekte anwenden (NACH Ausrüstung, BEVOR HP/Mana berechnet wird)
@@ -285,7 +305,7 @@ export class Character {
     let base = 0.03 + this.stats.intellect * 0.001;
     const spec = CLASSES[this.classKey].specs[this.specKey];
     if (spec.specialStats.spellCrit) base += spec.specialStats.spellCrit;
-    return Math.min(base + (this.bonusCritChance || 0), 0.75);
+    return Math.min(base + (this.bonusCritChance || 0) + (this.bonusSpellCrit || 0), 0.75);
   }
 
   /** Ausweichchance: 4% Base + 0.15% pro Agility + Rassenboni */
@@ -309,6 +329,29 @@ export class Character {
     if (spec?.specialStats?.healingPower) mult += spec.specialStats.healingPower;
     if (this.bonusHealPower) mult += this.bonusHealPower;
     return mult;
+  }
+
+  /** Bestimmt specKey dynamisch aus dem Talentbaum mit den meisten investierten Punkten */
+  updateActiveSpec(talentTrees) {
+    if (!talentTrees || !talentTrees[this.classKey]) return;
+    const trees = talentTrees[this.classKey];
+    let bestSpec = null, bestPts = 0;
+    for (const [spec, talents] of Object.entries(trees)) {
+      let pts = 0;
+      for (const t of talents) pts += (this.talents[t.id] || 0);
+      if (pts > bestPts) { bestPts = pts; bestSpec = spec; }
+    }
+    if (bestSpec && bestPts > 0) {
+      this.specKey = bestSpec;
+      this.resetStats();
+    }
+  }
+
+  /** Zählt investierte Punkte in einem bestimmten Talentbaum */
+  getTreePoints(treeTalents) {
+    let pts = 0;
+    for (const t of treeTalents) pts += (this.talents[t.id] || 0);
+    return pts;
   }
 
   /** Prüft ob ein Talent auf mindestens minLevel gelernt wurde */
@@ -398,7 +441,7 @@ export class Character {
 }
 
 export class Companion extends Character {
-  constructor(name, gender, raceKey, classKey, specKey, role) {
+  constructor(name, gender, raceKey, classKey, specKey = null, role = 'DAMAGE') {
     super(name, gender, raceKey, classKey, specKey);
     this.role = role; // 'HEALER' | 'TANK' | 'DAMAGE'
     this.gold = 0;

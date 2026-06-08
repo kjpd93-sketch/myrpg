@@ -267,6 +267,11 @@ export function turnInQuest(character, questId) {
   character.gold += finalGold;
   const leveledUp = character.addXp(quest.xpReward);
 
+  // Gefährten auf Spieler-Level bringen (wie im Combat)
+  if (leveledUp && character.party) {
+    character.party.forEach(c => c.syncLevel(character.level));
+  }
+
   // Quest in die Liste der abgeschlossenen verschieben
   character.completedQuests = character.completedQuests || [];
   character.completedQuests.push(quest.id);

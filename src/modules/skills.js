@@ -29,7 +29,7 @@ export const SKILL_DATABASE = {
     cost: 20,
     costType: 'WUT',
     type: 'damage',
-    description: 'Ein wuchtiger Hieb. Verursacht hohen physischen Schaden.',
+    description: '1.25× physischer Schaden. Basisangriff des Kriegers.',
     execute: (caster, target) => {
       if (caster.currentResource < 20) return { error: 'Nicht genug Wut!' };
       caster.currentResource -= 20;
@@ -51,7 +51,7 @@ export const SKILL_DATABASE = {
     cost: 15,
     costType: 'WUT',
     type: 'damage',
-    description: 'Schlägt mit dem Schild zu. Verursacht Schaden und erhöht die Rüstung um 30% für 2 Runden.',
+    description: 'Schlägt mit dem Schild zu (0.8× Waffenschaden). Erhöht eigene Rüstung um 30% für 2 Runden. +20% Schaden pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 15) return { error: 'Nicht genug Wut!' };
       caster.currentResource -= 15;
@@ -81,7 +81,7 @@ export const SKILL_DATABASE = {
     cost: 30,
     costType: 'WUT',
     type: 'heal',
-    description: 'Heilt den Krieger um 30% der maximalen Lebenspunkte.',
+    description: 'Heilt den Krieger um 30% der maximalen Lebenspunkte. +20% Heilmenge pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 30) return { error: 'Nicht genug Wut!' };
       caster.currentResource -= 30;
@@ -101,11 +101,11 @@ export const SKILL_DATABASE = {
     cost: 10,
     costType: 'WUT',
     type: 'debuff',
-    description: 'Schwächt den Gegner. Verringert seinen Schaden um 25% für 3 Runden.',
+    description: '🎯 SPOTT: Zwingt alle Gegner 2 Runden, dich anzugreifen. Verringert zudem ihren Schaden um 25% für 3 Runden. +5% pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 10) return { error: 'Nicht genug Wut!' };
       caster.currentResource -= 10;
-      
+
       target.debuffs = target.debuffs || [];
       target.debuffs.push({
         name: 'Demoralisiert',
@@ -115,9 +115,11 @@ export const SKILL_DATABASE = {
       });
 
       return {
-        text: `${caster.name} ruft demoralisierend. Der Schaden des Gegners wird verringert.`,
+        text: `${caster.name} brüllt herausfordernd! Die Gegner richten ihre Wut auf ihn.`,
         damage: 0,
-        healing: 0
+        healing: 0,
+        taunt: true,
+        tauntDuration: 2
       };
     }
   },
@@ -127,7 +129,7 @@ export const SKILL_DATABASE = {
     cost: 15,
     costType: 'WUT',
     type: 'damage',
-    description: 'Ein wuchtiger Schlag mit der Waffe.',
+    description: '1.5× physischer Schaden. Kein Skalieren mit Talentniveau.',
     execute: (caster, target) => {
       if (caster.currentResource < 15) return { error: 'Nicht genug Wut!' };
       caster.currentResource -= 15;
@@ -148,7 +150,7 @@ export const SKILL_DATABASE = {
     cost: 20,
     costType: 'WUT',
     type: 'damage',
-    description: 'Ein brutaler Schlag, der Schaden verursacht und den Krieger um 6% seiner maximalen Lebenspunkte heilt.',
+    description: '1.3× physischer Schaden + heilt den Krieger um 6% seiner maximalen LP. +25% Schaden & Heilung pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 20) return { error: 'Nicht genug Wut!' };
       caster.currentResource -= 20;
@@ -170,7 +172,7 @@ export const SKILL_DATABASE = {
     cost: 40,
     costType: 'WUT',
     type: 'buff',
-    description: 'Erhöht die Chance auf kritische Treffer um 40% für 3 Runden.',
+    description: 'Erhöht Krit-Chance für 3 Runden: +40% (Stufe 1) / +50% (Stufe 2) / +60% (Stufe 3).',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 40) return { error: 'Nicht genug Wut!' };
       caster.currentResource -= 40;
@@ -192,12 +194,12 @@ export const SKILL_DATABASE = {
     }
   },
   KRIEGER_WHIRLWIND: {
-    id: 'KRIEGER_WHIRLWIND',
+    id: 'KRIEGER_WHIRLWIND', aoe: true,
     name: 'Wirbelwind',
     cost: 30,
     costType: 'WUT',
     type: 'damage',
-    description: 'Wirbelt im Kreis. Verursacht Schaden und hinterlässt eine Blutung (DoT) für 3 Runden.',
+    description: 'Trifft alle Gegner (1.1× Schaden) + Blutung (DoT) für 3 Runden. +20% Schaden pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 30) return { error: 'Nicht genug Wut!' };
       caster.currentResource -= 30;
@@ -215,9 +217,10 @@ export const SKILL_DATABASE = {
       });
 
       return {
-        text: `${caster.name} wirbelt herum: ${dmg} Schaden. Das Ziel blutet!`,
+        text: `${caster.name} wirbelt herum: ${dmg} Schaden. Gegner bluten!`,
         damage: dmg,
-        healing: 0
+        healing: 0,
+        isAoe: true
       };
     }
   },
@@ -249,7 +252,7 @@ export const SKILL_DATABASE = {
     cost: 20,
     costType: 'MANA',
     type: 'damage',
-    description: 'Wirft einen Schild, der Heiligschaden verursacht und den Gegner betäubt (lässt nächste Runde aus).',
+    description: '🎯 SPOTT: Zieht 2 Runden die Aggro aller Gegner. Verursacht Heiligschaden, Betäubungschance 65% (+10% pro Talentniveau).',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 20) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 20;
@@ -257,12 +260,18 @@ export const SKILL_DATABASE = {
       const dmg = Math.round((caster.getPhysicalDamage() * 0.6 + caster.getSpellPower() * 0.4) * mult);
       target.currentHp = Math.max(0, target.currentHp - dmg);
 
-      target.stunned = true;
+      const stunChance = 0.65 + (talentLevel - 1) * 0.10; // 65% / 75% / 85%
+      const stunned = Math.random() < stunChance;
+      if (stunned) target.stunned = true;
 
       return {
-        text: `${caster.name} wirft Schild des Rächers: ${dmg} Heiligschaden. Ziel ist BETÄUBT!`,
+        text: stunned
+          ? `${caster.name} wirft Schild des Rächers: ${dmg} Heiligschaden. 💫 Ziel ist BETÄUBT! (${Math.round(stunChance*100)}%)`
+          : `${caster.name} wirft Schild des Rächers: ${dmg} Heiligschaden. Ziel widersteht der Betäubung!`,
         damage: dmg,
-        healing: 0
+        healing: 0,
+        taunt: true,
+        tauntDuration: 2
       };
     }
   },
@@ -272,7 +281,7 @@ export const SKILL_DATABASE = {
     cost: 25,
     costType: 'MANA',
     type: 'buff',
-    description: 'Erhöht die Blockchance um 25% und fügt Angreifern Heiligschaden zu, wenn geblockt wird (3 Runden).',
+    description: 'Blockchance +25% für 3 Runden. Geblockte Angriffe verursachen Heilig-Vergeltungsschaden. +5% Block pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 25) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 25;
@@ -302,7 +311,7 @@ export const SKILL_DATABASE = {
     cost: 15,
     costType: 'MANA',
     type: 'heal',
-    description: 'Ein schneller Heilzauber, der Lebenspunkte regeneriert.',
+    description: 'Schnelle Selbstheilung basierend auf Heilmacht. +30% Heilmenge pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 15) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 15;
@@ -324,7 +333,7 @@ export const SKILL_DATABASE = {
     cost: 15,
     costType: 'MANA',
     type: 'damage',
-    description: 'Ein mächtiger Nahkampfhieb, der hohen physischen Schaden verursacht.',
+    description: '1.4× physischer Schaden. +25% Schaden pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 15) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 15;
@@ -373,7 +382,7 @@ export const SKILL_DATABASE = {
     cost: 30,
     costType: 'MANA',
     type: 'heal',
-    description: 'Eine kraftvolle Heilung, die zusätzlich einen Schild erzeugt.',
+    description: 'Starke Heilung auf ein Ziel + Absorptionsschild basierend auf Heilmacht. +30% Heilung & Schild pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 30) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 30;
@@ -435,7 +444,7 @@ export const SKILL_DATABASE = {
     cost: 20,
     costType: 'MANA',
     type: 'damage',
-    description: 'Schießt einen Feuerball. Verursacht Feuerschaden und verbrennt das Ziel (DoT) für 3 Runden.',
+    description: 'Feuerschaden + Verbrennung-DoT (3 Runden). +20% Schaden & DoT pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 20) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 20;
@@ -489,7 +498,7 @@ export const SKILL_DATABASE = {
     cost: 40,
     costType: 'MANA',
     type: 'damage',
-    description: 'Entfesselt einen riesigen brennenden Felsbrocken, der enormen Feuerschaden verursacht.',
+    description: 'Massiver Feuerschaden (1.6× SpellPower). +30% Schaden pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 40) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 40;
@@ -541,7 +550,7 @@ export const SKILL_DATABASE = {
     cost: 30,
     costType: 'MANA',
     type: 'buff',
-    description: 'Umhüllt den Magier mit einem Schild, der Schaden absorbiert (3 Runden).',
+    description: 'Absorptionsschild (SpellPower × 1.5) für 3 Runden. +30% Schildstärke pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 30) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 30;
@@ -562,7 +571,7 @@ export const SKILL_DATABASE = {
     cost: 35,
     costType: 'MANA',
     type: 'damage',
-    description: 'Friert den Gegner tief ein. Verursacht Schaden und betäubt das Ziel für 1 Runde.',
+    description: 'Friert den Gegner tief ein. Verursacht Eisschaden. Einfrierchance: 60% (+10% pro Talentniveau).',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 35) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 35;
@@ -570,10 +579,14 @@ export const SKILL_DATABASE = {
       const dmg = Math.round((20 + caster.getSpellPower() * 0.9) * mult);
       target.currentHp = Math.max(0, target.currentHp - dmg);
 
-      target.stunned = true;
+      const stunChance = 0.60 + (talentLevel - 1) * 0.10; // 60% / 70% / 80%
+      const stunned = Math.random() < stunChance;
+      if (stunned) target.stunned = true;
 
       return {
-        text: `${caster.name} wirkt Tieffrieren: ${dmg} Eisschaden und das Ziel ist EINGEFROREN!`,
+        text: stunned
+          ? `${caster.name} wirkt Tieffrieren: ${dmg} Eisschaden. 🧊 Ziel ist EINGEFROREN! (${Math.round(stunChance*100)}%)`
+          : `${caster.name} wirkt Tieffrieren: ${dmg} Eisschaden. Ziel widersteht dem Frost!`,
         damage: dmg,
         healing: 0
       };
@@ -652,7 +665,7 @@ export const SKILL_DATABASE = {
     cost: 20,
     costType: 'MANA',
     type: 'damage',
-    description: 'Trifft den Geist des Ziels für hohen Schattenschaden.',
+    description: 'Hoher Schattenschaden (SpellPower × 1.3). +25% Schaden pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 20) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 20;
@@ -730,7 +743,7 @@ export const SKILL_DATABASE = {
     cost: 20,
     costType: 'MANA',
     type: 'heal',
-    description: 'Eine extrem schnelle und starke Heilung.',
+    description: 'Schnelle, starke Sofort-Heilung (SpellPower × 1.4). +35% Heilung pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 20) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 20;
@@ -750,7 +763,7 @@ export const SKILL_DATABASE = {
     cost: 25,
     costType: 'MANA',
     type: 'buff',
-    description: 'Umgibt den Priester mit einem Machtschild, der jeglichen Schaden absorbiert (4 Runden).',
+    description: 'Absorptionsschild (SpellPower × 1.8) für 4 Runden. +30% Schildstärke pro Talentniveau.',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 25) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 25;
@@ -799,7 +812,7 @@ export const SKILL_DATABASE = {
     }
   },
   KRIEGER_BLADESTORM: {
-    id: 'KRIEGER_BLADESTORM',
+    id: 'KRIEGER_BLADESTORM', aoe: true,
     name: 'Klingensturm',
     cost: 35, costType: 'WUT', type: 'damage',
     description: 'Wirbelt die Klinge durch alle Feinde. 1.3× physischer Schaden auf ALLE Gegner.',
@@ -933,7 +946,7 @@ export const SKILL_DATABASE = {
     }
   },
   PALADIN_CONSECRATION: {
-    id: 'PALADIN_CONSECRATION',
+    id: 'PALADIN_CONSECRATION', aoe: true,
     name: 'Weihe',
     cost: 30, costType: 'MANA', type: 'damage',
     description: 'Weiht den Boden. Heiligschaden an allen Feinden + heilt Party um 50% davon.',
@@ -958,7 +971,7 @@ export const SKILL_DATABASE = {
     passiveEffect: (c, level) => { c.holyAuraLevel = level; } // Wird in combat.js geprüft
   },
   PALADIN_DIVINE_STORM: {
-    id: 'PALADIN_DIVINE_STORM',
+    id: 'PALADIN_DIVINE_STORM', aoe: true,
     name: 'Göttlicher Sturm',
     cost: 55, costType: 'MANA', type: 'damage',
     description: '★ ULTIMATE ★ Heiligschaden auf alle Feinde + heilt Party um 40% des Gesamtschadens.',
@@ -1067,16 +1080,25 @@ export const SKILL_DATABASE = {
     id: 'MAGIER_COUNTERSPELL',
     name: 'Gegenzauber',
     cost: 25, costType: 'MANA', type: 'debuff',
-    description: 'Unterbricht den Feind. Ziel überspringt nächste Runde + erleidet 3 Runden Magieschaden (DoT).',
+    description: 'Unterbricht den Feind. Unterbrechungschance: 75% (+8% pro Talentniveau). Außerdem 3 Runden Magieschaden (DoT).',
     execute: (caster, target, talentLevel = 1) => {
       if (caster.currentResource < 25) return { error: 'Nicht genug Mana!' };
       caster.currentResource -= 25;
       const mult = 1 + (talentLevel - 1) * 0.20;
-      target.stunned = true;
       const dotDmg = Math.round((6 + caster.getSpellPower() * 0.30) * mult);
       target.debuffs = target.debuffs || [];
       target.debuffs.push({ name: 'Magieunterdrückung', duration: 3, dot: dotDmg });
-      return { text: `${caster.name} wirkt Gegenzauber! Ziel betäubt + ${dotDmg} Magieschaden/Runde.`, damage: 0, healing: 0 };
+
+      const stunChance = 0.75 + (talentLevel - 1) * 0.08; // 75% / 83% / 91%
+      const stunned = Math.random() < stunChance;
+      if (stunned) target.stunned = true;
+
+      return {
+        text: stunned
+          ? `${caster.name} wirkt Gegenzauber! 🔇 Ziel unterbrochen (${Math.round(stunChance*100)}%) + ${dotDmg} Magieschaden/Runde.`
+          : `${caster.name} wirkt Gegenzauber! Ziel widersteht der Unterbrechung, aber ${dotDmg} Magieschaden/Runde wirkt!`,
+        damage: 0, healing: 0
+      };
     }
   },
   MAGIER_ARCANE_POWER: {
@@ -1124,7 +1146,7 @@ export const SKILL_DATABASE = {
     passiveEffect: (c, level) => { c.bonusCritChance = (c.bonusCritChance || 0) + 0.05 * level; }
   },
   MAGIER_FLAMESTRIKE: {
-    id: 'MAGIER_FLAMESTRIKE',
+    id: 'MAGIER_FLAMESTRIKE', aoe: true,
     name: 'Flammeneinschlag',
     cost: 65, costType: 'MANA', type: 'damage',
     description: '★ ULTIMATE ★ Massiver Feuer-AoE auf alle Feinde. Brand-DoT auf alle (3 Runden).',
@@ -1151,7 +1173,7 @@ export const SKILL_DATABASE = {
     passiveEffect: (c, level) => { c.bonusCritChance = (c.bonusCritChance || 0) + 0.06 * level; }
   },
   MAGIER_FROZEN_ORB: {
-    id: 'MAGIER_FROZEN_ORB',
+    id: 'MAGIER_FROZEN_ORB', aoe: true,
     name: 'Gefrorene Kugel',
     cost: 65, costType: 'MANA', type: 'damage',
     description: '★ ULTIMATE ★ AoE Eisschaden auf alle Feinde. Slow-Debuff (−25% Trefferchance) für 3 Runden.',
@@ -1262,7 +1284,7 @@ export const SKILL_DATABASE = {
     }
   },
   PRIESTER_VOID_ERUPTION: {
-    id: 'PRIESTER_VOID_ERUPTION',
+    id: 'PRIESTER_VOID_ERUPTION', aoe: true,
     name: 'Leerenausbruch',
     cost: 60, costType: 'MANA', type: 'damage',
     description: '★ ULTIMATE ★ Massiver Schattenschaden + Schatten-DoT auf alle Feinde (3 Runden).',
@@ -1336,6 +1358,309 @@ export const SKILL_DATABASE = {
         healing: heal
       };
     }
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // NEUE SKILLS FÜR 7er-TALENTBÄUME
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── KRIEGER SCHUTZ: Schildwall ──────────────────────────────────────────
+  KRIEGER_SHIELD_WALL: {
+    id: 'KRIEGER_SHIELD_WALL', name: 'Schildwall',
+    cost: 25, costType: 'WUT', type: 'buff',
+    description: 'Gesamte Party erleidet 20% weniger Schaden für 3 Runden. +5% pro Talentniveau.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 25) return { error: 'Nicht genug Wut!' };
+      caster.currentResource -= 25;
+      const reduction = 0.80 - (talentLevel - 1) * 0.05; // 0.80 / 0.75 / 0.70
+      const allHeroes = [caster, ...(caster.party || [])];
+      allHeroes.forEach(h => {
+        h.buffs = h.buffs || [];
+        h.buffs.push({ name: 'Schildwall', duration: 3, effect: (c) => { c.damageTakenMultiplier = Math.min(c.damageTakenMultiplier || 1.0, reduction); }, text: `Schaden um ${Math.round((1-reduction)*100)}% reduziert.` });
+      });
+      return { text: `${caster.name} errichtet den Schildwall! Party nimmt ${Math.round((1-reduction)*100)}% weniger Schaden.`, damage: 0, healing: 0 };
+    }
+  },
+  // ── KRIEGER SCHUTZ: Unnachgiebigkeit (Passiv) ──────────────────────────
+  KRIEGER_TENACITY: {
+    id: 'KRIEGER_TENACITY', name: 'Unnachgiebigkeit', type: 'passive',
+    description: '[PASSIV] +5% maximale Lebenspunkte pro Stufe.',
+    execute: () => ({ text: '[Passiv] Unnachgiebigkeit ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.maxHp = Math.round(c.maxHp * (1 + 0.05 * level)); }
+  },
+
+  // ── KRIEGER FUROR: Rampage ──────────────────────────────────────────────
+  KRIEGER_RAMPAGE: {
+    id: 'KRIEGER_RAMPAGE', name: 'Amoklauf',
+    cost: 30, costType: 'WUT', type: 'damage',
+    description: '3 schnelle Schläge à 0.6× Waffenschaden. Jeder Treffer generiert 5 Wut. +15% pro Stufe.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 30) return { error: 'Nicht genug Wut!' };
+      caster.currentResource -= 30;
+      const mult = 1 + (talentLevel - 1) * 0.15;
+      let total = 0; const hits = [];
+      for (let i = 0; i < 3; i++) {
+        const dmg = Math.round(caster.getPhysicalDamage() * 0.6 * mult);
+        target.currentHp = Math.max(0, target.currentHp - dmg);
+        total += dmg; hits.push(dmg);
+        caster.currentResource = Math.min(100, caster.currentResource + 5);
+      }
+      return { text: `${caster.name} geht Amok: ${hits.join(' + ')} = ${total} Schaden! (+15 Wut)`, damage: total, healing: 0 };
+    }
+  },
+  // ── KRIEGER FUROR: Enrage (Passiv) ──────────────────────────────────────
+  KRIEGER_ENRAGE: {
+    id: 'KRIEGER_ENRAGE', name: 'Raserei', type: 'passive',
+    description: '[PASSIV] Unter 50% HP: +12% physischer Schaden pro Stufe.',
+    execute: () => ({ text: '[Passiv] Raserei ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => {
+      // Wird in resetStats gesetzt; im Kampf prüft combat.js den HP-Stand
+      c.enrageLevel = level;
+    }
+  },
+
+  // ── KRIEGER WAFFEN: Überlegenheit ───────────────────────────────────────
+  KRIEGER_OVERPOWER: {
+    id: 'KRIEGER_OVERPOWER', name: 'Überlegenheit',
+    cost: 10, costType: 'WUT', type: 'damage',
+    description: 'Garantierter kritischer Treffer. 1.5× Waffenschaden. +20% pro Stufe.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 10) return { error: 'Nicht genug Wut!' };
+      caster.currentResource -= 10;
+      const mult = 1 + (talentLevel - 1) * 0.20;
+      const dmg = Math.round(caster.getPhysicalDamage() * 1.5 * mult * 2.0); // garantierter Krit
+      target.currentHp = Math.max(0, target.currentHp - dmg);
+      return { text: `${caster.name} nutzt Überlegenheit: ${dmg} KRITISCHER Schaden!`, damage: dmg, healing: 0, isCrit: true };
+    }
+  },
+  // ── KRIEGER WAFFEN: Tiefe Wunden (Passiv) ──────────────────────────────
+  KRIEGER_DEEP_WOUNDS: {
+    id: 'KRIEGER_DEEP_WOUNDS', name: 'Tiefe Wunden', type: 'passive',
+    description: '[PASSIV] Kritische Treffer hinterlassen Blutung: 8% Waffenschaden pro Runde, 3 Runden. Pro Stufe +4%.',
+    execute: () => ({ text: '[Passiv] Tiefe Wunden ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.deepWoundsLevel = level; }
+  },
+
+  // ── MAGIER FEUER: Lebende Bombe ─────────────────────────────────────────
+  MAGIER_LIVING_BOMB: {
+    id: 'MAGIER_LIVING_BOMB', name: 'Lebende Bombe',
+    cost: 30, costType: 'MANA', type: 'damage',
+    description: 'Belegt Ziel mit Feuerbombe: 4 Runden DoT, dann Explosion für 2× SpellPower AoE-Schaden.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 30) return { error: 'Nicht genug Mana!' };
+      caster.currentResource -= 30;
+      const mult = 1 + (talentLevel - 1) * 0.20;
+      const dotDmg = Math.round((8 + caster.getSpellPower() * 0.30) * mult);
+      target.debuffs = target.debuffs || [];
+      const explosionDmg = Math.round(caster.getSpellPower() * 2 * mult);
+      target.debuffs.push({ name: 'Lebende Bombe', duration: 4, dot: dotDmg, explosionDmg, text: `Brennt für ${dotDmg}/Runde, explodiert dann für ${explosionDmg} AoE.` });
+      const initialDmg = Math.round((10 + caster.getSpellPower() * 0.4) * mult);
+      target.currentHp = Math.max(0, target.currentHp - initialDmg);
+      return { text: `${caster.name} belegt ${target.name} mit Lebender Bombe: ${initialDmg} Feuerschaden + ${dotDmg}/Runde DoT!`, damage: initialDmg, healing: 0 };
+    }
+  },
+  // ── MAGIER FEUER: Feuermeister (Passiv) ─────────────────────────────────
+  MAGIER_FIRE_MASTERY: {
+    id: 'MAGIER_FIRE_MASTERY', name: 'Feuermeister', type: 'passive',
+    description: '[PASSIV] Alle Feuerzauber +10% Schaden pro Stufe. Brand-DoTs +15% stärker.',
+    execute: () => ({ text: '[Passiv] Feuermeister ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.fireMasteryLevel = level; c.bonusStats.spellPower = (c.bonusStats.spellPower || 0) + Math.round(c.stats.intellect * 0.06 * level); }
+  },
+
+  // ── MAGIER EIS: Frostnova ───────────────────────────────────────────────
+  MAGIER_FROST_NOVA: {
+    id: 'MAGIER_FROST_NOVA', aoe: true, name: 'Frostnova',
+    cost: 25, costType: 'MANA', type: 'damage',
+    description: 'AoE Eisexplosion: Eisschaden + 50% Betäubungschance auf alle Feinde. +8% Chance pro Stufe.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 25) return { error: 'Nicht genug Mana!' };
+      caster.currentResource -= 25;
+      const mult = 1 + (talentLevel - 1) * 0.20;
+      const dmg = Math.round((12 + caster.getSpellPower() * 0.5) * mult);
+      target.currentHp = Math.max(0, target.currentHp - dmg);
+      const stunChance = 0.50 + (talentLevel - 1) * 0.08;
+      const stunned = Math.random() < stunChance;
+      if (stunned) target.stunned = true;
+      return { text: stunned ? `${caster.name} wirkt Frostnova: ${dmg} Eisschaden. 🧊 EINGEFROREN!` : `${caster.name} wirkt Frostnova: ${dmg} Eisschaden.`, damage: dmg, healing: 0, isAoe: true };
+    }
+  },
+  // ── MAGIER EIS: Kälteschutz (Passiv) ────────────────────────────────────
+  MAGIER_COLD_SNAP: {
+    id: 'MAGIER_COLD_SNAP', name: 'Kälteschutz', type: 'passive',
+    description: '[PASSIV] Absorptionsschilde +12% stärker pro Stufe. Frostblitz verlangsamt +5% stärker.',
+    execute: () => ({ text: '[Passiv] Kälteschutz ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.coldSnapLevel = level; c.bonusShieldMult = (c.bonusShieldMult || 0) + 0.12 * level; }
+  },
+
+  // ── MAGIER ARKAN: Nether-Sturm ─────────────────────────────────────────
+  MAGIER_NETHER_TEMPEST: {
+    id: 'MAGIER_NETHER_TEMPEST', name: 'Nether-Sturm',
+    cost: 35, costType: 'MANA', type: 'damage',
+    description: 'Arkaner Sturm: Schaden + stellt 20 Mana wieder her. +20% Schaden pro Stufe.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 35) return { error: 'Nicht genug Mana!' };
+      caster.currentResource -= 35;
+      const mult = 1 + (talentLevel - 1) * 0.20;
+      const dmg = Math.round((20 + caster.getSpellPower() * 1.1) * mult);
+      target.currentHp = Math.max(0, target.currentHp - dmg);
+      caster.currentResource = Math.min(caster.maxResource, caster.currentResource + 20);
+      return { text: `${caster.name} entfesselt Nether-Sturm: ${dmg} arkaner Schaden! (+20 Mana zurück)`, damage: dmg, healing: 0 };
+    }
+  },
+  // ── MAGIER ARKAN: Mana-Adept (Passiv) ───────────────────────────────────
+  MAGIER_MANA_ADEPT: {
+    id: 'MAGIER_MANA_ADEPT', name: 'Mana-Adept', type: 'passive',
+    description: '[PASSIV] +8 Mana-Regeneration pro Runde pro Stufe. +3% max Mana pro Stufe.',
+    execute: () => ({ text: '[Passiv] Mana-Adept ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.manaRegenPassive = (c.manaRegenPassive || 0) + 8 * level; c.maxResource = Math.round(c.maxResource * (1 + 0.03 * level)); }
+  },
+
+  // ── PALADIN SCHUTZ: Reckoning ───────────────────────────────────────────
+  PALADIN_RECKONING: {
+    id: 'PALADIN_RECKONING', name: 'Vergeltungsschlag',
+    cost: 15, costType: 'MANA', type: 'damage',
+    description: 'Kontert den nächsten Angriff mit 2× Waffenschaden. Buff hält 2 Runden.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 15) return { error: 'Nicht genug Mana!' };
+      caster.currentResource -= 15;
+      const mult = 1 + (talentLevel - 1) * 0.25;
+      const dmg = Math.round(caster.getPhysicalDamage() * 2.0 * mult);
+      target.currentHp = Math.max(0, target.currentHp - dmg);
+      return { text: `${caster.name} schlägt vergeltend zu: ${dmg} Schaden!`, damage: dmg, healing: 0 };
+    }
+  },
+  // ── PALADIN SCHUTZ: Unerschütterlich (Passiv) ──────────────────────────
+  PALADIN_ARDENT_DEFENDER: {
+    id: 'PALADIN_ARDENT_DEFENDER', name: 'Unerschütterlich', type: 'passive',
+    description: '[PASSIV] Unter 35% HP: erlittener Schaden −10% pro Stufe.',
+    execute: () => ({ text: '[Passiv] Unerschütterlich ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.ardentDefenderLevel = level; }
+  },
+
+  // ── PALADIN VERGELTER: Tempelritter-Urteil ──────────────────────────────
+  PALADIN_TEMPLARS_VERDICT: {
+    id: 'PALADIN_TEMPLARS_VERDICT', name: 'Tempelritter-Urteil',
+    cost: 25, costType: 'MANA', type: 'damage',
+    description: 'Heiliger Schlag: physisch + Heiligschaden. Hoher Single-Target-Burst. +25% pro Stufe.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 25) return { error: 'Nicht genug Mana!' };
+      caster.currentResource -= 25;
+      const mult = 1 + (talentLevel - 1) * 0.25;
+      const physDmg = Math.round(caster.getPhysicalDamage() * 1.2 * mult);
+      const holyDmg = Math.round(caster.getSpellPower() * 0.8 * mult);
+      const total = physDmg + holyDmg;
+      target.currentHp = Math.max(0, target.currentHp - total);
+      return { text: `${caster.name} fällt Tempelritter-Urteil: ${physDmg} phys. + ${holyDmg} heilig = ${total} Schaden!`, damage: total, healing: 0 };
+    }
+  },
+  // ── PALADIN VERGELTER: Heilige Stärke (Passiv) ─────────────────────────
+  PALADIN_SANCTITY: {
+    id: 'PALADIN_SANCTITY', name: 'Heilige Stärke', type: 'passive',
+    description: '[PASSIV] +6% Heiligschaden und physischer Schaden pro Stufe.',
+    execute: () => ({ text: '[Passiv] Heilige Stärke ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.physDmgMultiplier = (c.physDmgMultiplier || 1.0) + 0.06 * level; c.bonusStats.spellPower = (c.bonusStats.spellPower || 0) + Math.round(c.stats.intellect * 0.04 * level); }
+  },
+
+  // ── PALADIN HEILIG: Handauflegung ───────────────────────────────────────
+  PALADIN_LAY_ON_HANDS: {
+    id: 'PALADIN_LAY_ON_HANDS', name: 'Handauflegung',
+    cost: 40, costType: 'MANA', type: 'heal',
+    description: 'Massive Heilung auf ein Ziel: 60% maxHP + Absorptionsschild. +15% pro Stufe.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 40) return { error: 'Nicht genug Mana!' };
+      caster.currentResource -= 40;
+      const mult = 1 + (talentLevel - 1) * 0.15;
+      const t = target || caster;
+      const heal = Math.round(t.maxHp * 0.60 * mult * (caster.getHealPower?.() || 1));
+      t.currentHp = Math.min(t.maxHp, t.currentHp + heal);
+      const shieldVal = Math.round(heal * 0.25);
+      t.shield = (t.shield || 0) + shieldVal;
+      return { text: `${caster.name} legt ${t.name} die Hände auf: +${heal} HP + ${shieldVal} Schild!`, damage: 0, healing: heal };
+    }
+  },
+  // ── PALADIN HEILIG: Erleuchtung (Passiv) ────────────────────────────────
+  PALADIN_ILLUMINATION: {
+    id: 'PALADIN_ILLUMINATION', name: 'Erleuchtung', type: 'passive',
+    description: '[PASSIV] Heilzauber +8% stärker pro Stufe. +5 Mana-Regeneration pro Runde.',
+    execute: () => ({ text: '[Passiv] Erleuchtung ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.bonusHealPower = (c.bonusHealPower || 0) + 0.08 * level; c.manaRegenPassive = (c.manaRegenPassive || 0) + 5 * level; }
+  },
+
+  // ── PRIESTER SCHATTEN: Vampirische Umarmung ─────────────────────────────
+  PRIESTER_VAMPIRIC_EMBRACE: {
+    id: 'PRIESTER_VAMPIRIC_EMBRACE', name: 'Vampirische Umarmung',
+    cost: 20, costType: 'MANA', type: 'damage',
+    description: 'Schattenangriff: Schaden + Party heilt 25% des Schadens. +20% pro Stufe.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 20) return { error: 'Nicht genug Mana!' };
+      caster.currentResource -= 20;
+      const mult = 1 + (talentLevel - 1) * 0.20;
+      const dmg = Math.round((18 + caster.getSpellPower() * 0.9) * mult);
+      target.currentHp = Math.max(0, target.currentHp - dmg);
+      const healPer = Math.round(dmg * 0.25);
+      const allHeroes = [caster, ...(caster.party || [])];
+      allHeroes.forEach(h => { h.currentHp = Math.min(h.maxHp, h.currentHp + healPer); });
+      return { text: `${caster.name} wirkt Vampirische Umarmung: ${dmg} Schattenschaden. Party heilt je ${healPer} LP!`, damage: dmg, healing: healPer * allHeroes.length };
+    }
+  },
+  // ── PRIESTER SCHATTEN: Dunkelheit (Passiv) ──────────────────────────────
+  PRIESTER_DARKNESS: {
+    id: 'PRIESTER_DARKNESS', name: 'Dunkelheit', type: 'passive',
+    description: '[PASSIV] Schatten-DoTs +15% Schaden pro Stufe. Lebensraub +5% pro Stufe.',
+    execute: () => ({ text: '[Passiv] Dunkelheit ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.darknessLevel = level; c.bonusStats.spellPower = (c.bonusStats.spellPower || 0) + Math.round(c.stats.intellect * 0.05 * level); }
+  },
+
+  // ── PRIESTER HEILUNG: Kreis der Heilung ─────────────────────────────────
+  PRIESTER_CIRCLE_OF_HEALING: {
+    id: 'PRIESTER_CIRCLE_OF_HEALING', name: 'Kreis der Heilung',
+    cost: 30, costType: 'MANA', type: 'heal',
+    description: 'AoE-Heilung auf gesamte Party. +25% Heilung pro Stufe.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 30) return { error: 'Nicht genug Mana!' };
+      caster.currentResource -= 30;
+      const mult = 1 + (talentLevel - 1) * 0.25;
+      const allHeroes = [caster, ...(caster.party || [])];
+      let totalHeal = 0;
+      allHeroes.forEach(h => {
+        const heal = Math.round((20 + caster.getSpellPower() * 0.7) * mult * (caster.getHealPower?.() || 1));
+        h.currentHp = Math.min(h.maxHp, h.currentHp + heal);
+        totalHeal += heal;
+      });
+      return { text: `${caster.name} wirkt Kreis der Heilung: Party heilt je ${Math.round(totalHeal/allHeroes.length)} LP!`, damage: 0, healing: totalHeal };
+    }
+  },
+  // ── PRIESTER HEILUNG: Innerer Fokus (Passiv) ───────────────────────────
+  PRIESTER_INNER_FOCUS: {
+    id: 'PRIESTER_INNER_FOCUS', name: 'Innerer Fokus', type: 'passive',
+    description: '[PASSIV] +8% Heilung pro Stufe. Kritische Heilung +5% Chance pro Stufe.',
+    execute: () => ({ text: '[Passiv] Innerer Fokus ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.bonusHealPower = (c.bonusHealPower || 0) + 0.08 * level; c.bonusCritChance = (c.bonusCritChance || 0) + 0.05 * level; }
+  },
+
+  // ── PRIESTER DISZIPLIN: Sühne ───────────────────────────────────────────
+  PRIESTER_ATONEMENT: {
+    id: 'PRIESTER_ATONEMENT', name: 'Sühne',
+    cost: 20, costType: 'MANA', type: 'damage',
+    description: 'Heiligschaden auf Feind + Party erhält Schild = 40% des Schadens. +20% pro Stufe.',
+    execute: (caster, target, talentLevel = 1) => {
+      if (caster.currentResource < 20) return { error: 'Nicht genug Mana!' };
+      caster.currentResource -= 20;
+      const mult = 1 + (talentLevel - 1) * 0.20;
+      const dmg = Math.round((15 + caster.getSpellPower() * 0.7) * mult);
+      target.currentHp = Math.max(0, target.currentHp - dmg);
+      const shieldPer = Math.round(dmg * 0.40);
+      const allHeroes = [caster, ...(caster.party || [])];
+      allHeroes.forEach(h => { h.shield = (h.shield || 0) + shieldPer; });
+      return { text: `${caster.name} wirkt Sühne: ${dmg} Heiligschaden. Party +${shieldPer} Schild!`, damage: dmg, healing: 0 };
+    }
+  },
+  // ── PRIESTER DISZIPLIN: Schutzgeist (Passiv) ──────────────────────────
+  PRIESTER_SPIRIT_OF_REDEMPTION: {
+    id: 'PRIESTER_SPIRIT_OF_REDEMPTION', name: 'Schutzgeist', type: 'passive',
+    description: '[PASSIV] Schilde +10% stärker pro Stufe. Wenn Schild bricht: Heilt Träger um 15% maxHP pro Stufe.',
+    execute: () => ({ text: '[Passiv] Schutzgeist ist dauerhaft aktiv.', damage: 0, healing: 0 }),
+    passiveEffect: (c, level) => { c.spiritOfRedemptionLevel = level; c.bonusShieldMult = (c.bonusShieldMult || 0) + 0.10 * level; }
   }
 };
 
@@ -1343,161 +1668,240 @@ export const SKILL_DATABASE = {
 // requires: { talent: 'ID', level: N } — Voraussetzung
 // levelRequired: N — Charakter-Level das benötigt wird
 // type: 'passive' — wird nur gelernt, nicht aktiv eingesetzt
+// ═══════════════════════════════════════════════════════════════════════════════
+// TALENT TREES — 7 Einträge pro Baum, Tier-Gates via treePointsRequired
+// Reihe 1 (0 Punkte): 2 Skills | Reihe 2 (3 Punkte): 2 Skills
+// Reihe 3 (6 Punkte): 2 Skills | Ultimate (10 Punkte): 1 Skill
+// ═══════════════════════════════════════════════════════════════════════════════
 export const TALENT_TREES = {
   KRIEGER: {
-    TANK: [
-      { id: 'KRIEGER_SHIELD_SLAM', maxLevel: 3, name: 'Schildschlag', desc: 'Schaltet Schildschlag frei. +20% Schaden pro Stufe.' },
-      { id: 'KRIEGER_LAST_STAND',  maxLevel: 3, name: 'Letztes Gefecht', desc: '+20% Selbstheilung pro Stufe.' },
-      { id: 'KRIEGER_DEMO_SHOUT',  maxLevel: 3, name: 'Demoralisierender Ruf', desc: '+5% Schadensreduktion pro Stufe.' },
-      { id: 'KRIEGER_IRON_FORTRESS', maxLevel: 3, name: '⚙ Eisenfestung [Passiv]', type: 'passive', levelRequired: 3,
-        desc: '+20 Rüstung pro Stufe. Geblockte Angriffe → +8 Wut.',
-        requires: { talent: 'KRIEGER_SHIELD_SLAM', level: 1 } },
-      { id: 'KRIEGER_LAST_BASTION', maxLevel: 3, name: '★ Letzte Bastion [Ultimate]', levelRequired: 5,
-        desc: '50% weniger Schaden für 3+ Runden + 30 Wut. (Benötigt: Eisenfestung Stufe 1)',
-        requires: { talent: 'KRIEGER_IRON_FORTRESS', level: 1 } }
+    SCHUTZ: [
+      // --- Reihe 1 (0 Punkte) ---
+      { id: 'KRIEGER_SHIELD_SLAM', maxLevel: 3, name: 'Schildschlag', treePointsRequired: 0,
+        desc: 'Schaltet Schildschlag frei. +20% Schaden pro Stufe.' },
+      { id: 'KRIEGER_DEMO_SHOUT', maxLevel: 3, name: 'Demoralisierender Ruf', treePointsRequired: 0,
+        desc: 'Feind −5% Schaden pro Stufe.' },
+      // --- Reihe 2 (3 Punkte) ---
+      { id: 'KRIEGER_LAST_STAND', maxLevel: 3, name: 'Letztes Gefecht', treePointsRequired: 3,
+        desc: '+20% Selbstheilung pro Stufe.' },
+      { id: 'KRIEGER_SHIELD_WALL', maxLevel: 3, name: 'Schildwall', treePointsRequired: 3,
+        desc: 'Party −20% Schaden für 3 Runden. +5% pro Stufe.' },
+      // --- Reihe 3 (6 Punkte) ---
+      { id: 'KRIEGER_IRON_FORTRESS', maxLevel: 3, name: '⚙ Eisenfestung [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+20 Rüstung pro Stufe. Geblockte Angriffe → +8 Wut.' },
+      { id: 'KRIEGER_TENACITY', maxLevel: 3, name: '⚙ Unnachgiebigkeit [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+5% maximale Lebenspunkte pro Stufe.' },
+      // --- Ultimate (10 Punkte) ---
+      { id: 'KRIEGER_LAST_BASTION', maxLevel: 3, name: '★ Letzte Bastion [Ultimate]', treePointsRequired: 10,
+        desc: '50% weniger Schaden für 3+ Runden + 30 Wut.' }
     ],
     FUROR: [
-      { id: 'KRIEGER_BLOODTHIRST',  maxLevel: 3, name: 'Blutdurst', desc: 'Schaden + Selbstheilung. +25% pro Stufe.' },
-      { id: 'KRIEGER_RECKLESSNESS', maxLevel: 3, name: 'Tollkühnheit', desc: '+10% Krit-Chance pro Stufe.' },
-      { id: 'KRIEGER_WHIRLWIND',    maxLevel: 3, name: 'Wirbelwind', desc: 'AoE + Blutungseffekt. +20% Schaden pro Stufe.' },
-      { id: 'KRIEGER_BLOOD_FRENZY', maxLevel: 3, name: '⚙ Blutfieber [Passiv]', type: 'passive', levelRequired: 3,
-        desc: '+6% Krit-Chance pro Stufe. Crits → +8 Wut.',
-        requires: { talent: 'KRIEGER_BLOODTHIRST', level: 1 } },
-      { id: 'KRIEGER_EXECUTE', maxLevel: 3, name: '★ Hinrichten [Ultimate]', levelRequired: 5,
-        desc: '4× Schaden wenn Feind <30% HP. (Benötigt: Blutfieber Stufe 1)',
-        requires: { talent: 'KRIEGER_BLOOD_FRENZY', level: 1 } }
+      { id: 'KRIEGER_BLOODTHIRST', maxLevel: 3, name: 'Blutdurst', treePointsRequired: 0,
+        desc: 'Schaden + Selbstheilung. +25% pro Stufe.' },
+      { id: 'KRIEGER_WHIRLWIND', maxLevel: 3, name: 'Wirbelwind', treePointsRequired: 0,
+        desc: 'AoE + Blutungseffekt. +20% Schaden pro Stufe.' },
+      { id: 'KRIEGER_RECKLESSNESS', maxLevel: 3, name: 'Tollkühnheit', treePointsRequired: 3,
+        desc: '+10% Krit-Chance pro Stufe.' },
+      { id: 'KRIEGER_RAMPAGE', maxLevel: 3, name: 'Amoklauf', treePointsRequired: 3,
+        desc: '3 Schläge à 0.6× Schaden. +15% pro Stufe.' },
+      { id: 'KRIEGER_BLOOD_FRENZY', maxLevel: 3, name: '⚙ Blutfieber [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+6% Krit-Chance pro Stufe. Crits → +8 Wut.' },
+      { id: 'KRIEGER_ENRAGE', maxLevel: 3, name: '⚙ Raserei [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: 'Unter 50% HP: +12% physischer Schaden pro Stufe.' },
+      { id: 'KRIEGER_EXECUTE', maxLevel: 3, name: '★ Hinrichten [Ultimate]', treePointsRequired: 10,
+        desc: '4× Schaden wenn Feind <30% HP.' }
     ],
     WAFFEN: [
-      { id: 'KRIEGER_HEROIC_STRIKE', maxLevel: 3, name: 'Heroischer Hieb', desc: '1.8× physisch. +25% pro Stufe.' },
-      { id: 'KRIEGER_MORTAL_STRIKE', maxLevel: 3, name: 'Tödlicher Hieb', desc: '2.0× physisch + Heilungs-Unterdrückung.',
-        requires: { talent: 'KRIEGER_HEROIC_STRIKE', level: 1 } },
-      { id: 'KRIEGER_BLADESTORM',    maxLevel: 3, name: 'Klingensturm', desc: 'AoE 1.3× auf alle Feinde.' },
-      { id: 'KRIEGER_WEAPON_MASTERY', maxLevel: 3, name: '⚙ Waffenmeisterschaft [Passiv]', type: 'passive', levelRequired: 3,
+      { id: 'KRIEGER_HEROIC_STRIKE', maxLevel: 3, name: 'Heroischer Hieb', treePointsRequired: 0,
+        desc: '1.8× physisch. +25% pro Stufe.' },
+      { id: 'KRIEGER_BLADESTORM', maxLevel: 3, name: 'Klingensturm', treePointsRequired: 0,
+        desc: 'AoE 1.3× auf alle Feinde.' },
+      { id: 'KRIEGER_MORTAL_STRIKE', maxLevel: 3, name: 'Tödlicher Hieb', treePointsRequired: 3,
+        desc: '2.0× physisch + Heilungs-Unterdrückung.' },
+      { id: 'KRIEGER_OVERPOWER', maxLevel: 3, name: 'Überlegenheit', treePointsRequired: 3,
+        desc: 'Garantierter Krit. 1.5× Waffenschaden. +20% pro Stufe.' },
+      { id: 'KRIEGER_WEAPON_MASTERY', maxLevel: 3, name: '⚙ Waffenmeisterschaft [Passiv]', type: 'passive', treePointsRequired: 6,
         desc: '+8% physischer Gesamtschaden pro Stufe.' },
-      { id: 'KRIEGER_AVATAR', maxLevel: 3, name: '★ Avatar des Kriegers [Ultimate]', levelRequired: 5,
-        desc: '3 Angriffe à 100% Schaden. (Benötigt: Klingensturm Stufe 1)',
-        requires: { talent: 'KRIEGER_BLADESTORM', level: 1 } }
+      { id: 'KRIEGER_DEEP_WOUNDS', maxLevel: 3, name: '⚙ Tiefe Wunden [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: 'Crits hinterlassen Blutung: 8% Waffenschaden/Runde, 3 Runden. +4% pro Stufe.' },
+      { id: 'KRIEGER_AVATAR', maxLevel: 3, name: '★ Avatar des Kriegers [Ultimate]', treePointsRequired: 10,
+        desc: '3 Angriffe à 100% Schaden.' }
     ]
   },
   PALADIN: {
-    TANK: [
-      { id: 'PALADIN_AVENGERS_SHIELD', maxLevel: 3, name: 'Schild des Rächers', desc: 'Betäubung + Heiligschaden. +20% pro Stufe.' },
-      { id: 'PALADIN_HOLY_SHIELD',     maxLevel: 3, name: 'Heiliger Schild', desc: '+5% Blockchance + Vergeltungsschaden pro Stufe.' },
-      { id: 'PALADIN_FLASH_OF_LIGHT',  maxLevel: 3, name: 'Lichtblitz', desc: 'Schnelle Selbstheilung. +30% pro Stufe.' },
-      { id: 'PALADIN_SACRED_DUTY', maxLevel: 3, name: '⚙ Heilige Pflicht [Passiv]', type: 'passive', levelRequired: 3,
-        desc: '+8% Blockchance pro Stufe. Block → +10 LP Heilung.',
-        requires: { talent: 'PALADIN_HOLY_SHIELD', level: 1 } },
-      { id: 'PALADIN_DIVINE_PROTECTION', maxLevel: 3, name: '★ Göttlicher Schutz [Ultimate]', levelRequired: 5,
-        desc: 'Party unverwundbar für 1 Runde. (Benötigt: Heilige Pflicht Stufe 1)',
-        requires: { talent: 'PALADIN_SACRED_DUTY', level: 1 } }
+    SCHUTZ: [
+      { id: 'PALADIN_AVENGERS_SHIELD', maxLevel: 3, name: 'Schild des Rächers', treePointsRequired: 0,
+        desc: 'Betäubung + Heiligschaden. +20% pro Stufe.' },
+      { id: 'PALADIN_HOLY_SHIELD', maxLevel: 3, name: 'Heiliger Schild', treePointsRequired: 0,
+        desc: '+5% Blockchance + Vergeltungsschaden pro Stufe.' },
+      { id: 'PALADIN_FLASH_OF_LIGHT', maxLevel: 3, name: 'Lichtblitz', treePointsRequired: 3,
+        desc: 'Schnelle Selbstheilung. +30% pro Stufe.' },
+      { id: 'PALADIN_RECKONING', maxLevel: 3, name: 'Vergeltungsschlag', treePointsRequired: 3,
+        desc: 'Konterschlag: 2× Waffenschaden. +25% pro Stufe.' },
+      { id: 'PALADIN_SACRED_DUTY', maxLevel: 3, name: '⚙ Heilige Pflicht [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+8% Blockchance pro Stufe. Block → +10 LP.' },
+      { id: 'PALADIN_ARDENT_DEFENDER', maxLevel: 3, name: '⚙ Unerschütterlich [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: 'Unter 35% HP: −10% erlittener Schaden pro Stufe.' },
+      { id: 'PALADIN_DIVINE_PROTECTION', maxLevel: 3, name: '★ Göttlicher Schutz [Ultimate]', treePointsRequired: 10,
+        desc: 'Party unverwundbar für 1 Runde.' }
     ],
     VERGELTER: [
-      { id: 'PALADIN_CRUSADER_STRIKE', maxLevel: 3, name: 'Kreuzfahrerstoß', desc: '1.4× physisch. +25% pro Stufe.' },
-      { id: 'PALADIN_JUDGEMENT',       maxLevel: 3, name: 'Richturteil', desc: 'Heiligschaden + +15% Schadensanfälligkeit.' },
-      { id: 'PALADIN_WORD_OF_GLORY',   maxLevel: 3, name: 'Wort der Herrlichkeit', desc: 'Heilung + Schild. +30% pro Stufe.' },
-      { id: 'PALADIN_SEAL_OF_COMMAND', maxLevel: 3, name: '⚙ Siegel des Befehls [Passiv]', type: 'passive', levelRequired: 3,
-        desc: '+8% physischer Schaden pro Stufe.',
-        requires: { talent: 'PALADIN_CRUSADER_STRIKE', level: 1 } },
-      { id: 'PALADIN_AVENGING_WRATH', maxLevel: 3, name: '★ Rächer-Zorn [Ultimate]', levelRequired: 5,
-        desc: '+50% Schaden 3 Runden + Party-Heilung. (Benötigt: Siegel Stufe 1)',
-        requires: { talent: 'PALADIN_SEAL_OF_COMMAND', level: 1 } }
+      { id: 'PALADIN_CRUSADER_STRIKE', maxLevel: 3, name: 'Kreuzfahrerstoß', treePointsRequired: 0,
+        desc: '1.4× physisch. +25% pro Stufe.' },
+      { id: 'PALADIN_JUDGEMENT', maxLevel: 3, name: 'Richturteil', treePointsRequired: 0,
+        desc: 'Heiligschaden + +15% Schadensanfälligkeit.' },
+      { id: 'PALADIN_WORD_OF_GLORY', maxLevel: 3, name: 'Wort der Herrlichkeit', treePointsRequired: 3,
+        desc: 'Heilung + Schild. +30% pro Stufe.' },
+      { id: 'PALADIN_TEMPLARS_VERDICT', maxLevel: 3, name: 'Tempelritter-Urteil', treePointsRequired: 3,
+        desc: 'Physisch + Heiligschaden Burst. +25% pro Stufe.' },
+      { id: 'PALADIN_SEAL_OF_COMMAND', maxLevel: 3, name: '⚙ Siegel des Befehls [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+8% physischer Schaden pro Stufe.' },
+      { id: 'PALADIN_SANCTITY', maxLevel: 3, name: '⚙ Heilige Stärke [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+6% Heilig- und physischer Schaden pro Stufe.' },
+      { id: 'PALADIN_AVENGING_WRATH', maxLevel: 3, name: '★ Rächer-Zorn [Ultimate]', treePointsRequired: 10,
+        desc: '+50% Schaden 3 Runden + Party-Heilung.' }
     ],
     HEILIG: [
-      { id: 'PALADIN_HOLY_LIGHT',  maxLevel: 3, name: 'Heiliges Licht', desc: 'Starke Direktheilung. +30% pro Stufe.' },
-      { id: 'PALADIN_BEACON',      maxLevel: 3, name: 'Leuchtfeuer der Hoffnung', desc: 'Party-HoT 4 Runden.',
-        requires: { talent: 'PALADIN_HOLY_LIGHT', level: 1 } },
-      { id: 'PALADIN_CONSECRATION', maxLevel: 3, name: 'Weihe', desc: 'AoE Heiligschaden + Party-Heilung 50% davon.' },
-      { id: 'PALADIN_HOLY_AURA', maxLevel: 3, name: '⚙ Heilige Aura [Passiv]', type: 'passive', levelRequired: 3,
+      { id: 'PALADIN_HOLY_LIGHT', maxLevel: 3, name: 'Heiliges Licht', treePointsRequired: 0,
+        desc: 'Starke Direktheilung. +30% pro Stufe.' },
+      { id: 'PALADIN_CONSECRATION', maxLevel: 3, name: 'Weihe', treePointsRequired: 0,
+        desc: 'AoE Heiligschaden + Party-Heilung 50% davon.' },
+      { id: 'PALADIN_BEACON', maxLevel: 3, name: 'Leuchtfeuer der Hoffnung', treePointsRequired: 3,
+        desc: 'Party-HoT 4 Runden.' },
+      { id: 'PALADIN_LAY_ON_HANDS', maxLevel: 3, name: 'Handauflegung', treePointsRequired: 3,
+        desc: 'Massive Heilung: 60% maxHP + Absorptionsschild. +15% pro Stufe.' },
+      { id: 'PALADIN_HOLY_AURA', maxLevel: 3, name: '⚙ Heilige Aura [Passiv]', type: 'passive', treePointsRequired: 6,
         desc: 'Party −5% Schaden pro Stufe. Dauerhaft aktiv.' },
-      { id: 'PALADIN_DIVINE_STORM', maxLevel: 3, name: '★ Göttlicher Sturm [Ultimate]', levelRequired: 5,
-        desc: 'AoE Heiligschaden + Party-Heilung. (Benötigt: Aura Stufe 1)',
-        requires: { talent: 'PALADIN_HOLY_AURA', level: 1 } }
+      { id: 'PALADIN_ILLUMINATION', maxLevel: 3, name: '⚙ Erleuchtung [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: 'Heilzauber +8% stärker pro Stufe. +5 Mana-Regen pro Runde.' },
+      { id: 'PALADIN_DIVINE_STORM', maxLevel: 3, name: '★ Göttlicher Sturm [Ultimate]', treePointsRequired: 10,
+        desc: 'AoE Heiligschaden + Party-Heilung.' }
     ]
   },
   MAGIER: {
     FEUER: [
-      { id: 'MAGIER_FIREBALL',   maxLevel: 3, name: 'Feuerball', desc: 'Feuer + Brand-DoT. +20% pro Stufe.' },
-      { id: 'MAGIER_FIRE_BLAST', maxLevel: 3, name: 'Feuerschlag', desc: 'Sofortiger Feuer-Burst mit Crit-Bonus.' },
-      { id: 'MAGIER_PYROBLAST',  maxLevel: 3, name: 'Pyroschlag', desc: 'Massiver Feuerschaden. +30% pro Stufe.' },
-      { id: 'MAGIER_IGNITE', maxLevel: 3, name: '⚙ Entzünden [Passiv]', type: 'passive', levelRequired: 3,
-        desc: '+5% Spell-Crit pro Stufe.',
-        requires: { talent: 'MAGIER_FIREBALL', level: 1 } },
-      { id: 'MAGIER_FLAMESTRIKE', maxLevel: 3, name: '★ Flammeneinschlag [Ultimate]', levelRequired: 5,
-        desc: 'AoE Feuer + Brand auf alle. (Benötigt: Entzünden Stufe 1)',
-        requires: { talent: 'MAGIER_IGNITE', level: 1 } }
+      { id: 'MAGIER_FIREBALL', maxLevel: 3, name: 'Feuerball', treePointsRequired: 0,
+        desc: 'Feuer + Brand-DoT. +20% pro Stufe.' },
+      { id: 'MAGIER_FIRE_BLAST', maxLevel: 3, name: 'Feuerschlag', treePointsRequired: 0,
+        desc: 'Sofortiger Feuer-Burst mit Crit-Bonus.' },
+      { id: 'MAGIER_PYROBLAST', maxLevel: 3, name: 'Pyroschlag', treePointsRequired: 3,
+        desc: 'Massiver Feuerschaden. +30% pro Stufe.' },
+      { id: 'MAGIER_LIVING_BOMB', maxLevel: 3, name: 'Lebende Bombe', treePointsRequired: 3,
+        desc: 'Feuerbombe: DoT 4 Runden + Explosion. +20% pro Stufe.' },
+      { id: 'MAGIER_IGNITE', maxLevel: 3, name: '⚙ Entzünden [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+5% Spell-Crit pro Stufe.' },
+      { id: 'MAGIER_FIRE_MASTERY', maxLevel: 3, name: '⚙ Feuermeister [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: 'Alle Feuerzauber +10% Schaden pro Stufe.' },
+      { id: 'MAGIER_FLAMESTRIKE', maxLevel: 3, name: '★ Flammeneinschlag [Ultimate]', treePointsRequired: 10,
+        desc: 'AoE Feuer + Brand auf alle.' }
     ],
     EIS: [
-      { id: 'MAGIER_FROSTBOLT',   maxLevel: 3, name: 'Frostblitz', desc: 'Schaden + −Trefferchance Debuff.' },
-      { id: 'MAGIER_ICE_BARRIER', maxLevel: 3, name: 'Eisbarriere', desc: 'Absorptionsschild. +30% pro Stufe.' },
-      { id: 'MAGIER_DEEP_FREEZE', maxLevel: 3, name: 'Tieffrieren', desc: 'Schaden + Betäubung. +25% pro Stufe.' },
-      { id: 'MAGIER_SHATTER', maxLevel: 3, name: '⚙ Zersplittern [Passiv]', type: 'passive', levelRequired: 3,
-        desc: '+6% Spell-Crit pro Stufe.',
-        requires: { talent: 'MAGIER_FROSTBOLT', level: 1 } },
-      { id: 'MAGIER_FROZEN_ORB', maxLevel: 3, name: '★ Gefrorene Kugel [Ultimate]', levelRequired: 5,
-        desc: 'AoE Eis + Slow alle. (Benötigt: Zersplittern Stufe 1)',
-        requires: { talent: 'MAGIER_SHATTER', level: 1 } }
+      { id: 'MAGIER_FROSTBOLT', maxLevel: 3, name: 'Frostblitz', treePointsRequired: 0,
+        desc: 'Schaden + −Trefferchance Debuff.' },
+      { id: 'MAGIER_ICE_BARRIER', maxLevel: 3, name: 'Eisbarriere', treePointsRequired: 0,
+        desc: 'Absorptionsschild. +30% pro Stufe.' },
+      { id: 'MAGIER_DEEP_FREEZE', maxLevel: 3, name: 'Tieffrieren', treePointsRequired: 3,
+        desc: 'Schaden + Betäubung. +25% pro Stufe.' },
+      { id: 'MAGIER_FROST_NOVA', maxLevel: 3, name: 'Frostnova', treePointsRequired: 3,
+        desc: 'AoE Eisexplosion + 50% Betäubungschance. +8% pro Stufe.' },
+      { id: 'MAGIER_SHATTER', maxLevel: 3, name: '⚙ Zersplittern [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+6% Spell-Crit pro Stufe.' },
+      { id: 'MAGIER_COLD_SNAP', maxLevel: 3, name: '⚙ Kälteschutz [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: 'Absorptionsschilde +12% stärker pro Stufe.' },
+      { id: 'MAGIER_FROZEN_ORB', maxLevel: 3, name: '★ Gefrorene Kugel [Ultimate]', treePointsRequired: 10,
+        desc: 'AoE Eis + Slow alle.' }
     ],
     ARKAN: [
-      { id: 'MAGIER_ARCANE_MISSILES', maxLevel: 3, name: 'Arkane Geschosse', desc: '3 Treffer, jeder kann krittisch.' },
-      { id: 'MAGIER_ARCANE_BLAST',    maxLevel: 3, name: 'Arkaner Einschlag', desc: 'Massiver Einzel-Burst 2.2× SP.' },
-      { id: 'MAGIER_COUNTERSPELL',    maxLevel: 3, name: 'Gegenzauber', desc: 'Betäubt + Magie-DoT 3 Runden.' },
-      { id: 'MAGIER_ARCANE_POWER', maxLevel: 3, name: '⚙ Arkane Macht [Passiv]', type: 'passive', levelRequired: 3,
-        desc: '+6% Spell-Crit + SpellPower-Bonus pro Stufe.',
-        requires: { talent: 'MAGIER_ARCANE_MISSILES', level: 1 } },
-      { id: 'MAGIER_ARCANE_SURGE', maxLevel: 3, name: '★ Arkaner Ausbruch [Ultimate]', levelRequired: 5,
-        desc: '4 Arkane Einschläge, jeder kann krit. (Benötigt: Arkane Macht Stufe 1)',
-        requires: { talent: 'MAGIER_ARCANE_POWER', level: 1 } }
+      { id: 'MAGIER_ARCANE_MISSILES', maxLevel: 3, name: 'Arkane Geschosse', treePointsRequired: 0,
+        desc: '3 Treffer, jeder kann kritisch.' },
+      { id: 'MAGIER_ARCANE_BLAST', maxLevel: 3, name: 'Arkaner Einschlag', treePointsRequired: 0,
+        desc: 'Massiver Einzel-Burst 2.2× SP.' },
+      { id: 'MAGIER_COUNTERSPELL', maxLevel: 3, name: 'Gegenzauber', treePointsRequired: 3,
+        desc: 'Betäubt + Magie-DoT 3 Runden.' },
+      { id: 'MAGIER_NETHER_TEMPEST', maxLevel: 3, name: 'Nether-Sturm', treePointsRequired: 3,
+        desc: 'Arkaner Sturm: Schaden + 20 Mana zurück. +20% pro Stufe.' },
+      { id: 'MAGIER_ARCANE_POWER', maxLevel: 3, name: '⚙ Arkane Macht [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+6% Spell-Crit + SpellPower-Bonus pro Stufe.' },
+      { id: 'MAGIER_MANA_ADEPT', maxLevel: 3, name: '⚙ Mana-Adept [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+8 Mana-Regen/Runde pro Stufe. +3% max Mana.' },
+      { id: 'MAGIER_ARCANE_SURGE', maxLevel: 3, name: '★ Arkaner Ausbruch [Ultimate]', treePointsRequired: 10,
+        desc: '4 Arkane Einschläge, jeder kann krit.' }
     ]
   },
   PRIESTER: {
     SCHATTEN: [
-      { id: 'PRIESTER_MIND_BLAST', maxLevel: 3, name: 'Gedankenschlag', desc: 'Hoher Schattenschaden. +25% pro Stufe.' },
-      { id: 'PRIESTER_SW_PAIN',   maxLevel: 3, name: 'Schattenwort: Schmerz', desc: 'Schatten-DoT + Selbstheilung.' },
-      { id: 'PRIESTER_MIND_FLAY', maxLevel: 3, name: 'Gedankenschinder', desc: 'Lebensraub: Schaden = Heilung.' },
-      { id: 'PRIESTER_SHADOWFORM', maxLevel: 3, name: '⚙ Schattenform [Passiv]', type: 'passive', levelRequired: 3,
-        desc: '+8% Krit + +10% Schaden pro Stufe.',
-        requires: { talent: 'PRIESTER_MIND_BLAST', level: 1 } },
-      { id: 'PRIESTER_VOID_ERUPTION', maxLevel: 3, name: '★ Leerenausbruch [Ultimate]', levelRequired: 5,
-        desc: 'AoE Schattenschaden + DoT alle. (Benötigt: Schattenform Stufe 1)',
-        requires: { talent: 'PRIESTER_SHADOWFORM', level: 1 } }
+      { id: 'PRIESTER_MIND_BLAST', maxLevel: 3, name: 'Gedankenschlag', treePointsRequired: 0,
+        desc: 'Hoher Schattenschaden. +25% pro Stufe.' },
+      { id: 'PRIESTER_SW_PAIN', maxLevel: 3, name: 'Schattenwort: Schmerz', treePointsRequired: 0,
+        desc: 'Schatten-DoT + Selbstheilung.' },
+      { id: 'PRIESTER_MIND_FLAY', maxLevel: 3, name: 'Gedankenschinder', treePointsRequired: 3,
+        desc: 'Lebensraub: Schaden = Heilung.' },
+      { id: 'PRIESTER_VAMPIRIC_EMBRACE', maxLevel: 3, name: 'Vampirische Umarmung', treePointsRequired: 3,
+        desc: 'Schatten + Party heilt 25% des Schadens. +20% pro Stufe.' },
+      { id: 'PRIESTER_SHADOWFORM', maxLevel: 3, name: '⚙ Schattenform [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+8% Krit + +10% Schaden pro Stufe.' },
+      { id: 'PRIESTER_DARKNESS', maxLevel: 3, name: '⚙ Dunkelheit [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: 'Schatten-DoTs +15% stärker. Lebensraub +5% pro Stufe.' },
+      { id: 'PRIESTER_VOID_ERUPTION', maxLevel: 3, name: '★ Leerenausbruch [Ultimate]', treePointsRequired: 10,
+        desc: 'AoE Schattenschaden + DoT alle.' }
     ],
     HEILUNG: [
-      { id: 'PRIESTER_FLASH_HEAL', maxLevel: 3, name: 'Blitzheilung', desc: 'Schnelle starke Heilung. +35% pro Stufe.' },
-      { id: 'PRIESTER_SHIELD',     maxLevel: 3, name: 'Machtwort: Schild', desc: 'Absorptionsschild. +30% pro Stufe.' },
-      { id: 'PRIESTER_PRAYER',     maxLevel: 3, name: 'Gebet der Besserung', desc: 'Heilung + 50% Schadensreduktion.' },
-      { id: 'PRIESTER_HOLY_CONCENTRATION', maxLevel: 3, name: '⚙ Heilige Konzentration [Passiv]', type: 'passive', levelRequired: 3,
-        desc: '+10 Mana/Runde pro Stufe.',
-        requires: { talent: 'PRIESTER_FLASH_HEAL', level: 1 } },
-      { id: 'PRIESTER_DIVINE_HYMN', maxLevel: 3, name: '★ Göttliche Hymne [Ultimate]', levelRequired: 5,
-        desc: 'Heilt gesamte Party um 50% maxHP. (Benötigt: Konzentration Stufe 1)',
-        requires: { talent: 'PRIESTER_HOLY_CONCENTRATION', level: 1 } }
+      { id: 'PRIESTER_FLASH_HEAL', maxLevel: 3, name: 'Blitzheilung', treePointsRequired: 0,
+        desc: 'Schnelle starke Heilung. +35% pro Stufe.' },
+      { id: 'PRIESTER_SHIELD', maxLevel: 3, name: 'Machtwort: Schild', treePointsRequired: 0,
+        desc: 'Absorptionsschild. +30% pro Stufe.' },
+      { id: 'PRIESTER_PRAYER', maxLevel: 3, name: 'Gebet der Besserung', treePointsRequired: 3,
+        desc: 'Heilung + 50% Schadensreduktion.' },
+      { id: 'PRIESTER_CIRCLE_OF_HEALING', maxLevel: 3, name: 'Kreis der Heilung', treePointsRequired: 3,
+        desc: 'AoE-Heilung auf gesamte Party. +25% pro Stufe.' },
+      { id: 'PRIESTER_HOLY_CONCENTRATION', maxLevel: 3, name: '⚙ Heilige Konzentration [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+10 Mana/Runde pro Stufe.' },
+      { id: 'PRIESTER_INNER_FOCUS', maxLevel: 3, name: '⚙ Innerer Fokus [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: '+8% Heilung pro Stufe. +5% krit. Heilung pro Stufe.' },
+      { id: 'PRIESTER_DIVINE_HYMN', maxLevel: 3, name: '★ Göttliche Hymne [Ultimate]', treePointsRequired: 10,
+        desc: 'Heilt gesamte Party um 50% maxHP.' }
     ],
     DISZIPLIN: [
-      { id: 'PRIESTER_PENANCE',        maxLevel: 3, name: 'Buße', desc: '2× Schaden + 60% Selbstheilung.' },
-      { id: 'PRIESTER_PAIN_SUPRESSION', maxLevel: 3, name: 'Schmerzunterdrückung', desc: '−40% Schaden für Ziel, 3 Runden.' },
-      { id: 'PRIESTER_DIVINE_AEGIS',   maxLevel: 3, name: 'Göttliche Ägide', desc: 'Großes Absorptionsschild SP-skaliert.' },
-      { id: 'PRIESTER_DISC_PASSIVE', maxLevel: 3, name: '⚙ Disziplin-Aura [Passiv]', type: 'passive', levelRequired: 3,
-        desc: 'Party −4% Schaden pro Stufe. Schilde +15% stärker.',
-        requires: { talent: 'PRIESTER_DIVINE_AEGIS', level: 1 } },
-      { id: 'PRIESTER_SPIRIT_SHELL', maxLevel: 3, name: '★ Geistesschale [Ultimate]', levelRequired: 5,
-        desc: 'Party-Schild = 40% maxHP. (Benötigt: Disziplin-Aura Stufe 1)',
-        requires: { talent: 'PRIESTER_DISC_PASSIVE', level: 1 } }
+      { id: 'PRIESTER_PENANCE', maxLevel: 3, name: 'Buße', treePointsRequired: 0,
+        desc: '2× Schaden + 60% Selbstheilung.' },
+      { id: 'PRIESTER_PAIN_SUPRESSION', maxLevel: 3, name: 'Schmerzunterdrückung', treePointsRequired: 0,
+        desc: '−40% Schaden für Ziel, 3 Runden.' },
+      { id: 'PRIESTER_DIVINE_AEGIS', maxLevel: 3, name: 'Göttliche Ägide', treePointsRequired: 3,
+        desc: 'Großes Absorptionsschild SP-skaliert.' },
+      { id: 'PRIESTER_ATONEMENT', maxLevel: 3, name: 'Sühne', treePointsRequired: 3,
+        desc: 'Heiligschaden → Party erhält Schild = 40% des Schadens.' },
+      { id: 'PRIESTER_DISC_PASSIVE', maxLevel: 3, name: '⚙ Disziplin-Aura [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: 'Party −4% Schaden pro Stufe. Schilde +15% stärker.' },
+      { id: 'PRIESTER_SPIRIT_OF_REDEMPTION', maxLevel: 3, name: '⚙ Schutzgeist [Passiv]', type: 'passive', treePointsRequired: 6,
+        desc: 'Schilde +10% stärker. Schildbruch → Heilt 15% maxHP pro Stufe.' },
+      { id: 'PRIESTER_SPIRIT_SHELL', maxLevel: 3, name: '★ Geistesschale [Ultimate]', treePointsRequired: 10,
+        desc: 'Party-Schild = 40% maxHP.' }
     ]
   }
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Hilfsfunktion: Punkte in einem Baum zählen
+// ═══════════════════════════════════════════════════════════════════════════════
+function getTreeInvestedPoints(character, treeTalents) {
+  let pts = 0;
+  for (const t of treeTalents) pts += (character.talents?.[t.id] || 0);
+  return pts;
+}
+
 /**
- * Gibt die verfügbaren Zauber eines Charakters zurück (inkl. Standardangriffen und erlernten Talenten)
+ * Gibt die verfügbaren Zauber eines Charakters zurück (inkl. Standardangriffen und erlernten Talenten).
+ * Scannt ALLE 3 Talentbäume der Klasse — nicht nur den aktiven Spec.
  */
 export function getAvailableSkills(character) {
   const skills = [];
   const charClass = character.classKey;
-  const spec = character.specKey;
 
-  // 1. Standardangriffe hinzufügen (immer verfügbar)
+  // 1. Standardfähigkeiten (immer verfügbar, kosten kein Talent):
+  //    Auto-Angriff + eine Basis-Utility. Echte Spec-Skills (Feuerball, etc.)
+  //    kommen ausschließlich über Talentpunkte aus den Bäumen.
   if (charClass === 'KRIEGER') {
     skills.push(SKILL_DATABASE.KRIEGER_AUTO);
-    skills.push(SKILL_DATABASE.KRIEGER_SMASH); // zweites SMASH am Ende der DB (Stufe 1 kosten)
   } else if (charClass === 'PALADIN') {
     skills.push(SKILL_DATABASE.PALADIN_AUTO);
   } else if (charClass === 'MAGIER') {
@@ -1509,21 +1913,29 @@ export function getAvailableSkills(character) {
     skills.push(SKILL_DATABASE.PRIESTER_RENEW);
   }
 
-  // 2. Talente hinzufügen, sofern gelernt (TalentLevel >= 1) — Passive werden NICHT angezeigt
+  // 2. ALLE 3 Bäume scannen — jeder gelernte aktive Skill wird hinzugefügt.
+  //    Ist die Fähigkeit bereits als Basis vorhanden, wird sie durch die
+  //    talent-skalierte Version ERSETZT (kein Duplikat).
   const learnedTalents = character.talents || {};
-  const possibleTalents = TALENT_TREES[charClass]?.[spec] || [];
+  const classTrees = TALENT_TREES[charClass];
+  if (!classTrees) return skills;
 
-  for (const talent of possibleTalents) {
-    if (talent.type === 'passive') continue; // Passive sind immer aktiv, nicht im Kampf einsetzbar
-    const level = learnedTalents[talent.id] || 0;
-    if (level > 0) {
-      const skillTemplate = SKILL_DATABASE[talent.id];
-      if (skillTemplate) {
-        skills.push({
-          ...skillTemplate,
-          talentLevel: level,
-          execute: (c, t) => skillTemplate.execute(c, t, level)
-        });
+  for (const [specName, treeTalents] of Object.entries(classTrees)) {
+    for (const talent of treeTalents) {
+      if (talent.type === 'passive') continue; // Passive sind dauerhaft, nicht manuell einsetzbar
+      const level = learnedTalents[talent.id] || 0;
+      if (level > 0) {
+        const skillTemplate = SKILL_DATABASE[talent.id];
+        if (skillTemplate) {
+          const scaled = {
+            ...skillTemplate,
+            talentLevel: level,
+            execute: (c, t) => skillTemplate.execute(c, t, level)
+          };
+          const existingIdx = skills.findIndex(s => s.id === talent.id);
+          if (existingIdx >= 0) skills[existingIdx] = scaled; // Basis → talent-skalierte Version
+          else skills.push(scaled);
+        }
       }
     }
   }
@@ -1532,30 +1944,38 @@ export function getAvailableSkills(character) {
 }
 
 /**
- * Lernt oder verbessert ein Talent (inkl. Voraussetzungen und Level-Gating)
+ * Lernt oder verbessert ein Talent.
+ * Sucht in ALLEN 3 Bäumen der Klasse, erzwingt treePointsRequired-Gates,
+ * und aktualisiert den dynamischen specKey.
  */
 export function learnTalent(character, talentId) {
   if (character.skillPoints <= 0) return { error: 'Keine Skillpunkte übrig!' };
 
   const charClass = character.classKey;
-  const spec = character.specKey;
-  const possibleTalents = TALENT_TREES[charClass]?.[spec] || [];
-  const talentMeta = possibleTalents.find(t => t.id === talentId);
+  const classTrees = TALENT_TREES[charClass];
+  if (!classTrees) return { error: 'Keine Talentbäume für diese Klasse!' };
 
-  if (!talentMeta) return { error: 'Dieses Talent existiert nicht für deine Spezialisierung!' };
+  // Talent in ALLEN Bäumen suchen
+  let talentMeta = null;
+  let foundTreeName = null;
+  let foundTreeTalents = null;
 
-  // Level-Voraussetzung prüfen
-  if (talentMeta.levelRequired && character.level < talentMeta.levelRequired) {
-    return { error: `Benötigt Charakterstufe ${talentMeta.levelRequired}! (Du bist Stufe ${character.level})` };
+  for (const [treeName, treeTalents] of Object.entries(classTrees)) {
+    const found = treeTalents.find(t => t.id === talentId);
+    if (found) {
+      talentMeta = found;
+      foundTreeName = treeName;
+      foundTreeTalents = treeTalents;
+      break;
+    }
   }
 
-  // Talent-Voraussetzung prüfen
-  if (talentMeta.requires) {
-    const reqLevel = character.talents[talentMeta.requires.talent] || 0;
-    if (reqLevel < talentMeta.requires.level) {
-      const reqMeta = possibleTalents.find(t => t.id === talentMeta.requires.talent);
-      return { error: `Voraussetzung: '${reqMeta?.name || talentMeta.requires.talent}' muss mindestens Stufe ${talentMeta.requires.level} sein!` };
-    }
+  if (!talentMeta) return { error: 'Dieses Talent existiert nicht für deine Klasse!' };
+
+  // Tier-Gate: genug Punkte im SELBEN Baum?
+  const treePts = getTreeInvestedPoints(character, foundTreeTalents);
+  if (talentMeta.treePointsRequired && treePts < talentMeta.treePointsRequired) {
+    return { error: `Benötigt ${talentMeta.treePointsRequired} Punkte im ${foundTreeName}-Baum! (Du hast ${treePts})` };
   }
 
   const currentLevel = character.talents[talentId] || 0;
@@ -1572,7 +1992,10 @@ export function learnTalent(character, talentId) {
     character.passiveEffects[talentId] = (c) => passiveEffectFn(c, c.talents[talentId] || 0);
   }
 
+  // Dynamischen Spec aktualisieren (Baum mit meisten Punkten bestimmt specKey)
+  character.updateActiveSpec(TALENT_TREES);
+
   character.resetStats(); // Werte neu kalkulieren (wendet passiveEffects an)
 
-  return { success: true, newLevel: character.talents[talentId], isPassive: !!talentMeta.type?.includes('passive') };
+  return { success: true, newLevel: character.talents[talentId], treeName: foundTreeName, isPassive: !!talentMeta.type?.includes('passive') };
 }

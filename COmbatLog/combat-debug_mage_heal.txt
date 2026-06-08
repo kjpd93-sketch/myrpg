@@ -1,0 +1,75 @@
+════════════════════════════════════════════════════════════
+KAMPF-DEBUG-REPORT  —  8.6.2026, 22:03:13
+════════════════════════════════════════════════════════════
+Runde: 5   |   Kampf vorbei: nein
+Tempo: slow   |   Dungeon-Modifikator: Kein Modifikator
+
+────────────────────────────────────────────────────────────
+PARTY
+────────────────────────────────────────────────────────────
+▸ Kevin — MENSCH Krieger (Waffen (Meister)) Lvl 2  [SPIELER]
+    HP 133/314   WUT 42/100   Bedrohung 115
+    STR 22 AGI 10.5 INT 6 STA 28.5
+    PhysDmg 24  SpellPower 4  Rüstung 40  Krit 11%  ZKrit 4%  Block 0%  Ausweichen 6%
+    Talente: KRIEGER_HEROIC_STRIKE:1, KRIEGER_BLADESTORM:1  |  Skillpunkte offen: 0
+    Ausrüstung: chest=Kettenhemd der Wache, feet=Kettenstiefel des Milizionärs, mainHand=Einhändiges Kurzschwert, offHand=Holzschild des Knappen
+    Buffs: -  Debuffs: Giftbiss(2)
+▸ Elara — NACHTELF Priester (Heilung) Lvl 2  [Companion/HEALER]
+    HP 89/149   MANA 9/207   Bedrohung 18
+    STR 5 AGI 12.5 INT 23 STA 13.5
+    PhysDmg 12  SpellPower 24  Rüstung 10  Krit 6%  ZKrit 5%  Block 0%  Ausweichen 11%
+    Talente: PRIESTER_FLASH_HEAL:2  |  Skillpunkte offen: 0
+    Ausrüstung: chest=Stoffrobe des Adepten, feet=Stoffstiefel des Wanderers, mainHand=Stahldolch, offHand=Heiliges Buch des Gebets
+▸ Kael — MENSCH Magier (Eis) Lvl 2  [Companion/DPS]
+    HP 1/149   MANA 27/227   Bedrohung 84
+    STR 6 AGI 10.5 INT 27 STA 13.5
+    PhysDmg 10  SpellPower 29  Rüstung 12  Krit 6%  ZKrit 6%  Block 0%  Ausweichen 6%
+    Talente: MAGIER_FROSTBOLT:1, MAGIER_ICE_BARRIER:1  |  Skillpunkte offen: 0
+    Ausrüstung: chest=Stoffrobe des Adepten, feet=Stoffstiefel des Wanderers, mainHand=Eibenholzstab des Lehrlings
+
+────────────────────────────────────────────────────────────
+GEGNER
+────────────────────────────────────────────────────────────
+▸ Riesenspinne Lvl 1  HP 59/216  Schaden 28  Rüstung 4
+    Skills: Giftbiss(30%,DoT)
+▸ Riesenspinne Lvl 1  HP 216/216  Schaden 28  Rüstung 4
+    Skills: Giftbiss(30%,DoT)
+
+────────────────────────────────────────────────────────────
+KAMPFLOG (chronologisch)
+────────────────────────────────────────────────────────────
+  1. Kampf gegen Riesenspinne, Riesenspinne beginnt!
+  2. 🎲 Initiative: Kevin (25.5), Elara (21.5), Kael (15.5), Riesenspinne (6), Riesenspinne (4)
+  3. Kevin greift an und verursacht 24 physischen Schaden. (+10 Wut)
+  4. [Comp] Elara greift mit Zauberstab an: 9 Schaden.
+  5. [Comp] Kael wirft Magiegeschoss: 12 Zauberschaden.
+  6. Riesenspinne greift Kevin an. 
+  7.   → Kevin: 23 Schaden (17% Red.) [+9 Wut]
+  8. Riesenspinne greift Kael an. 
+  9.   → Kael: 26 Schaden (6% Red.)
+ 10. ─── Runde 2 ───
+ 11. Kevin führt Heroischen Hieb aus: 43 physischer Schaden.
+ 12. [Comp] ✗ Elara verfehlt Riesenspinne! (77% Treffer-Chance)
+ 13. [Comp] Kael heilt Kevin um 60 LP. (127/314)
+ 14. Riesenspinne greift Kael an. 
+ 15.   → Kael: 26 Schaden (6% Red.)
+ 16. Riesenspinne greift Kevin an. 
+ 17.   Kevin weicht aus! ✨
+ 18. ─── Runde 3 ───
+ 19. Kevin greift an und verursacht 24 physischen Schaden. (+10 Wut)
+ 20. [Comp] ✗ Elara verfehlt Riesenspinne! (77% Treffer-Chance)
+ 21. [Comp] Kael wirft Magiegeschoss: 12 Zauberschaden.
+ 22. Riesenspinne greift Kevin an. 
+ 23.   → Kevin: 23 Schaden (17% Red.) [+9 Wut]
+ 24. Riesenspinne wirkt 'Giftbiss': beißt giftig zu. 
+ 25.   → Kevin: 23 Schaden (17% Red.) [+9 Wut]
+ 26. ─── Runde 4 ───
+ 27. [DoT] Kevin erleidet 8 Schaden durch 'Giftbiss'.
+ 28. Kevin greift an und verursacht 24 physischen Schaden. (+10 Wut)
+ 29. [Comp] Elara greift mit Zauberstab an: 9 Schaden.
+ 30. [Comp] Kael heilt Kevin um 60 LP. (133/314)
+ 31. Riesenspinne greift Kael an. 
+ 32.   → Kael: 26 Schaden (6% Red.)
+ 33. Riesenspinne greift Kael an. 
+ 34.   → Kael: 26 Schaden (6% Red.)
+ 35. ─── Runde 5 ───
